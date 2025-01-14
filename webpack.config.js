@@ -5,7 +5,7 @@ module.exports = {
   mode: 'development',
   entry: './src/main.js',
   output: {
-    filename: 'bundle.js',
+    filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
   },
@@ -49,7 +49,7 @@ module.exports = {
       },
     ],
   },
-  // optimization: {
-  //   runtimeChunk: "single",
-  // },
+  optimization: {
+    runtimeChunk: 'single',
+  },
 };
