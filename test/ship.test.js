@@ -1,4 +1,4 @@
-const Ship = require('../src/ship');
+const Ship = require('../src/ship.js');
 
 describe('Ship methods test', () => {
   let ship;
