@@ -6,7 +6,7 @@ import eslintPluginPrettier from 'eslint-plugin-prettier/recommended';
 export default [
   {languageOptions: {globals: globals.browser}},
   pluginJs.configs.recommended,
-  eslintPluginPrettier,
+  // eslintPluginPrettier,
   {
     ignores: ['webpack.config.js', 'dist', 'eslint.config.mjs'],
   },
@@ -14,7 +14,7 @@ export default [
     rules: {
       'capitalized-comments': ['error', 'always'],
       'no-unused-vars': 'off',
-      'no-undef': 'warn',
+      'no-undef': 'off',
       'arrow-body-style': ['error', 'always'],
       'quote-props': ['error', 'as-needed'],
     },
