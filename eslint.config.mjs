@@ -15,7 +15,7 @@ export default [
       'capitalized-comments': ['error', 'always'],
       'no-unused-vars': 'off',
       'no-undef': 'off',
-      'arrow-body-style': ['error', 'always'],
+      'arrow-body-style': ['error', 'warn'],
       'quote-props': ['error', 'as-needed'],
     },
   },
