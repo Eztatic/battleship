@@ -37,12 +37,17 @@ class Gameboard {
   }
 
   receiveAttack(x, y) {
+    const empty = 0;
+    const ship = 1;
+    const hit = -1;
+    const miss = -2;
+
     switch (this.board[x][y]) {
-      case 0:
-        this.board[x][y] = -2;
+      case empty:
+        this.board[x][y] = miss;
         break;
-      case 1:
-        this.board[x][y] = -1;
+      case ship:
+        this.board[x][y] = hit;
         break;
     }
 
@@ -54,6 +59,10 @@ class Gameboard {
         }
       });
     });
+  }
+
+  allShipsSunk() {
+    return this.ships.every((ship) => ship.sunk === true);
   }
 }
 

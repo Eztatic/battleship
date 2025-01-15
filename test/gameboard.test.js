@@ -112,7 +112,7 @@ describe('Gameboard test', () => {
     ]);
   });
 
-  test('Hit ship in board', () => {
+  test('Hit a ship in board', () => {
     gameboard.placeShip(0, 0, ship1, 'horizontal');
     gameboard.receiveAttack(0, 0);
     gameboard.receiveAttack(0, 1);
@@ -128,5 +128,14 @@ describe('Gameboard test', () => {
     gameboard.receiveAttack(0, 2);
 
     expect(ship1.sunk).toBe(true);
+  });
+
+  test.only('If all ships sunk in gameboard', () => {
+    gameboard.placeShip(0, 0, ship1, 'horizontal');
+    gameboard.receiveAttack(0, 0);
+    gameboard.receiveAttack(0, 1);
+    gameboard.receiveAttack(0, 2);
+
+    expect(gameboard.allShipsSunk()).toBe(true);
   });
 });
