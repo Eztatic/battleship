@@ -1,4 +1,4 @@
-class Gameboard {
+export default class Gameboard {
   constructor() {
     this.board = this.createBoard();
     this.ships = [];
@@ -66,4 +66,3 @@ class Gameboard {
   }
 }
 
-module.exports = Gameboard;

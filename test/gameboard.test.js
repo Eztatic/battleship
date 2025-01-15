@@ -1,5 +1,5 @@
-const Gameboard = require('../src/gameboard.js');
-const Ship = require('../src/ship.js');
+import Gameboard from '../src/gameboard.js';
+import Ship from '../src/ship.js';
 
 describe('Gameboard test', () => {
   let gameboard;
@@ -130,7 +130,7 @@ describe('Gameboard test', () => {
     expect(ship1.sunk).toBe(true);
   });
 
-  test.only('If all ships sunk in gameboard', () => {
+  test('If all ships sunk in gameboard', () => {
     gameboard.placeShip(0, 0, ship1, 'horizontal');
     gameboard.receiveAttack(0, 0);
     gameboard.receiveAttack(0, 1);
