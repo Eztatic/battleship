@@ -14,8 +14,8 @@ export default class Gameboard {
   }
 
   placeShip(x, y, ship, direction) {
-    if (direction === 'horizontal' && y > 10 - ship.length) return;
-    if (direction === 'vertical' && x > 10 - ship.length) return;
+    if (direction === 'horizontal' && y > 10 - ship.length) return false;
+    if (direction === 'vertical' && x > 10 - ship.length) return false;
 
     // Check placement if empty
     for (let i = 0; i < ship.length; i++) {
@@ -34,6 +34,7 @@ export default class Gameboard {
       this.board[row][col] = 1;
     }
     this.ships.push(ship);
+    return true;
   }
 
   receiveAttack(x, y) {
@@ -65,4 +66,3 @@ export default class Gameboard {
     return this.ships.every((ship) => ship.sunk === true);
   }
 }
-

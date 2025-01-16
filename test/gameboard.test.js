@@ -41,6 +41,10 @@ describe('Gameboard test', () => {
     ]);
   });
 
+  test('When place ship must return true/false', () => {
+    expect(gameboard.placeShip(9, 0, ship1, 'vertical')).toEqual(false);
+  });
+
   test('Place ship horizontally', () => {
     gameboard.placeShip(0, 7, ship1, 'horizontal');
     expect(gameboard.board).toEqual([
