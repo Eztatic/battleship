@@ -1,0 +1,79 @@
+:root {
+  --dark: #052f5f;
+  --neutral: #005377;
+  --light: #eeebd3;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: 'Rubik', serif;
+}
+
+body {
+  background-color: var(--neutral);
+}
+
+dialog.show {
+  background-color: var(--light);
+  padding: 2.5rem 4rem;
+  border-radius: 2rem;
+  outline: 4px solid var(--dark);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-rows: 0.01fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  gap: 2rem;
+}
+
+dialog::backdrop {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+}
+
+dialog > p {
+  font-size: 2.5rem;
+  font-weight: 500;
+  grid-column: span 2;
+}
+
+dialog > div > p {
+  font-size: 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+dialog > div {
+  padding: 4rem 2rem;
+  cursor: pointer;
+}
+
+dialog > div:hover {
+  background: rgba(131, 131, 131, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(150, 150, 150, 0.7);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  border-radius: 10px;
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+dialog img {
+  height: 150px;
+}
+
+#game-logo {
+  height: 200px;
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  user-select: none;
+  -webkit-user-drag: none;
+}
