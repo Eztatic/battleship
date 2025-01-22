@@ -1,4 +1,4 @@
-import './style.css';
+// import './style.css';
 import './dom.js';
 import Gameboard from './gameboard.js';
 import Ship from './ship.js';
@@ -32,6 +32,11 @@ function startGame() {
 }
 
 startGame();
+
+// First User Interaction
+// window.onload = () => {
+//   DOM.showGameModes();
+// };
 
 // Export for testing
 // export {computer, ships, createShips};
