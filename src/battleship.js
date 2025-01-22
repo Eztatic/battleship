@@ -31,4 +31,7 @@ function startGame() {
   DOM.renderBoardCells(player1.gameboard.board);
 }
 
-export {computer, ships, createShips};
+startGame();
+
+// Export for testing
+// export {computer, ships, createShips};

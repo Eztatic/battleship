@@ -1,5 +1,5 @@
 const dialog = document.querySelector('dialog');
-const board1 = document.querySelector('.board1');
+const board1 = document.querySelector('.board');
 
 // dialog.showModal();
 // dialog.classList.add('show');
