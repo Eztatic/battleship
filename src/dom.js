@@ -1,22 +1,25 @@
-const dialog = document.querySelector('dialog');
-const board1 = document.querySelector('.board');
+const gameMode = document.querySelector('.game-modes');
+const board1 = document.querySelector('.board-1 .board');
 const ships = document.querySelectorAll('.ship');
+const resetBtn = document.querySelector('.resetBtn');
+const rotateBtn = document.querySelector('.rotateBtn');
 const vsComputer = document.querySelector('.computer');
 const boardLength = 100;
-let cells = [];
 
 let draggedShip = null;
 let currentBlock = null;
 let successDrop = false;
 let blockPositions = 'horizontal';
+let cells = [];
 let targetCells = [];
+let shipDetails = [];
 
 function showGameModes() {
-  dialog.showModal();
-  dialog.classList.add('show');
+  gameMode.showModal();
+  gameMode.classList.add('show');
   vsComputer.addEventListener('click', () => {
-    dialog.close();
-    dialog.classList.remove('show');
+    gameMode.close();
+    gameMode.classList.remove('show');
   });
 }
 
@@ -40,9 +43,16 @@ function renderBoardCells(playerBoard) {
   });
 }
 
-// DRAG FEATURE
+function allShipsPlaced(ships) {
+  return Array.from(ships).some((ship) => {
+    if (!ship.classList.contains('hidden')) return true;
+  });
+}
+
+// DRAG N DROP FEATURE
 
 // Helper Functions
+
 function removeHighlights() {
   targetCells.forEach((cell) => {
     cell.classList.remove('highlight');
@@ -70,8 +80,36 @@ function validateCells(blocks, blockX, blockY, cellX, cellY, cb) {
   return result;
 }
 
+function getTargetCell(blocks, blockX, blockY, cellX, cellY) {
+  let result = [];
+
+  blocks.forEach((block) => {
+    const offsetX = parseInt(block.dataset.offsetX) - blockX;
+    const offsetY = parseInt(block.dataset.offsetY) - blockY;
+    const targetCell = document.querySelector(
+      `.cell[data-x="${cellX + offsetX}"][data-y="${cellY + offsetY}"]`,
+    );
+
+    if (targetCell)
+      result.push({
+        x: targetCell.dataset.x,
+        y: targetCell.dataset.y,
+        position: blockPositions,
+        length: parseInt(block.parentElement.dataset.size),
+      });
+  });
+
+  return result[0];
+}
+
 function outOfBounds(cell, block, boardLength, blockLength) {
   if (cell - block > boardLength - blockLength || cell - block < 0) return true;
+}
+
+function getShipDetails() {
+  return shipDetails.sort((a, b) => {
+    return a.length - b.length;
+  });
 }
 
 ships.forEach((ship) => {
@@ -83,26 +121,20 @@ ships.forEach((ship) => {
   ship.addEventListener('dragend', dragEnd);
 });
 
+// Event Handlers
+
 function dragStart(e) {
   draggedShip = this;
 
+  // Auto offset
   const rect = this.getBoundingClientRect();
   const offsetX = event.clientX - rect.left;
   const offsetY = event.clientY - rect.top;
 
-  const ghost = document.createElement('div');
-  ghost.className = 'ship';
-  ghost.style.position = 'absolute';
+  // Ghost Element
+  const ghost = draggedShip.cloneNode(true);
   ghost.style.opacity = '0.5';
-  const blocks = this.querySelectorAll('.block');
-
-  blocks.forEach((block) => {
-    const clone = block.cloneNode(true);
-    ghost.appendChild(clone);
-  });
-
   document.body.appendChild(ghost);
-
   e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
 
   setTimeout(() => {
@@ -197,7 +229,42 @@ function dropShip(e) {
     },
   );
 
+  const firstTargetCell = getTargetCell(
+    blocks,
+    currentBlockX,
+    currentBlockY,
+    startX,
+    startY,
+  );
+  shipDetails.push(firstTargetCell);
+
   successDrop = true;
 }
 
-export {renderBoardCells, showGameModes};
+// Button Events
+
+rotateBtn.addEventListener('click', () => {
+  ships.forEach((shape) => {
+    const isHorizontal = shape.dataset.position === 'horizontal';
+    blockPositions = isHorizontal ? 'vertical' : 'horizontal';
+    shape.dataset.position = isHorizontal ? 'vertical' : 'horizontal';
+    shape.style.flexDirection = isHorizontal ? 'column' : 'row';
+    shape.querySelectorAll('.block').forEach((block) => {
+      [block.dataset.offsetX, block.dataset.offsetY] = [
+        block.dataset.offsetY,
+        block.dataset.offsetX,
+      ];
+    });
+  });
+});
+
+resetBtn.addEventListener('click', () => {
+  if (!cells) return;
+  cells.forEach((cell) => {
+    cell.classList.remove('filled');
+  });
+  ships.forEach((ship) => ship.classList.remove('hidden'));
+  shipDetails = [];
+});
+
+export {renderBoardCells, showGameModes, getShipDetails, allShipsPlaced};

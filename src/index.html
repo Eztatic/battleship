@@ -11,7 +11,7 @@
       <script src="./battleship.js" defer type="module"></script>
 </head>
 <body>
-      <dialog>
+      <dialog class="game-modes">
             <p>Choose Game Mode:</p>
             <div class="computer">
                   <img src="./images/vsAI.png" alt="icon" loading="lazy">
@@ -25,7 +25,7 @@
 
       <img id="game-logo" src="./images/battleship-logo.png" alt="logo" loading="lazy">
       <main>
-            <div>
+            <div class="board-1">
                   <h1 class="title">Player 1</h1>
                   <div class="board">
                         <!-- <div class="cell" data-x="0" data-y="0"></div>
@@ -36,6 +36,10 @@
                         <button class="resetBtn">Reset</button>
                         <button class="finishBtn">Finish</button>
                   </div>
+            </div>
+            <div class="board-2 hidden">
+                  <h1 class="title">Computer</h1>
+                  <div class="board"></div>
             </div>
             <div class="ships">
                   <h1 class="title">Ships</h1>
@@ -84,7 +88,6 @@
                   </div>
                   <button class="rotateBtn">🔄 Rotate Ships</button>
             </div>
-
       </main>
 </body>
 </html>
