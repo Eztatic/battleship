@@ -1,18 +1,20 @@
 const gameMode = document.querySelector('.game-modes');
-const board1 = document.querySelector('.board-1 .board');
+// const board1 = document.querySelector('.board-1 .board');
 const ships = document.querySelectorAll('.ship');
 const resetBtn = document.querySelector('.resetBtn');
 const rotateBtn = document.querySelector('.rotateBtn');
 const vsComputer = document.querySelector('.computer');
+const loader = document.querySelector('.loader');
 const boardLength = 100;
 
+let cells = [];
+let targetCells = [];
+let shipDetails = [];
 let draggedShip = null;
 let currentBlock = null;
 let successDrop = false;
 let blockPositions = 'horizontal';
-let cells = [];
-let targetCells = [];
-let shipDetails = [];
+// let hitOrMiss = 'miss';
 
 function showGameModes() {
   gameMode.showModal();
@@ -23,18 +25,20 @@ function showGameModes() {
   });
 }
 
-function renderBoardCells(playerBoard) {
+function renderBoardCells(playerBoard, UIBoard) {
   playerBoard.forEach((row, x) => {
     row.forEach((col, y) => {
       const cell = document.createElement('div');
       cell.classList.add('cell');
       cell.dataset.x = x;
       cell.dataset.y = y;
-      board1.appendChild(cell);
+      document.querySelector(`.${UIBoard} .board`).appendChild(cell);
     });
   });
+}
 
-  cells = document.querySelectorAll('.cell');
+function addDragEvents(UIBoard) {
+  cells = document.querySelectorAll(`.${UIBoard} .cell`);
   cells.forEach((cell) => {
     cell.addEventListener('dragover', dragOver);
     cell.addEventListener('dragenter', dragEnter);
@@ -47,6 +51,17 @@ function allShipsPlaced(ships) {
   return Array.from(ships).some((ship) => {
     if (!ship.classList.contains('hidden')) return true;
   });
+}
+
+// TASK: Make attack on computer board feature
+function battlePhase() {
+  document.querySelector('.ships').classList.add('hidden');
+  document.querySelector('.boardBtns').classList.add('hidden');
+  document.querySelector('.board-2').classList.remove('hidden');
+}
+
+function toggleLoader() {
+  loader.classList.toggle('hidden');
 }
 
 // DRAG N DROP FEATURE
@@ -92,8 +107,8 @@ function getTargetCell(blocks, blockX, blockY, cellX, cellY) {
 
     if (targetCell)
       result.push({
-        x: targetCell.dataset.x,
-        y: targetCell.dataset.y,
+        x: parseInt(targetCell.dataset.x),
+        y: parseInt(targetCell.dataset.y),
         position: blockPositions,
         length: parseInt(block.parentElement.dataset.size),
       });
@@ -267,4 +282,12 @@ resetBtn.addEventListener('click', () => {
   shipDetails = [];
 });
 
-export {renderBoardCells, showGameModes, getShipDetails, allShipsPlaced};
+export {
+  renderBoardCells,
+  addDragEvents,
+  showGameModes,
+  getShipDetails,
+  allShipsPlaced,
+  battlePhase,
+  toggleLoader,
+};
