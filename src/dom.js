@@ -1,5 +1,6 @@
 const gameMode = document.querySelector('.game-modes');
-// const board1 = document.querySelector('.board-1 .board');
+const player1UIBoard = document.querySelector('.board-1 .board');
+const compUIBoard = document.querySelector('.board-2 .board');
 const ships = document.querySelectorAll('.ship');
 const resetBtn = document.querySelector('.resetBtn');
 const rotateBtn = document.querySelector('.rotateBtn');
@@ -25,8 +26,8 @@ function showGameModes() {
   });
 }
 
-function renderBoardCells(playerBoard, UIBoard) {
-  playerBoard.forEach((row, x) => {
+function renderBoardCells(board, UIBoard) {
+  board.forEach((row, x) => {
     row.forEach((col, y) => {
       const cell = document.createElement('div');
       cell.classList.add('cell');
@@ -282,6 +283,24 @@ resetBtn.addEventListener('click', () => {
   shipDetails = [];
 });
 
+// Board Cover
+function addBoardCover(targetBoard, text) {
+  const coverBoard = document.createElement('div');
+  coverBoard.innerText = text;
+  coverBoard.classList.add('board-cover');
+  coverBoard.classList.add('hidden');
+  targetBoard.appendChild(coverBoard);
+}
+addBoardCover(player1UIBoard, `Player 1's Turn`);
+addBoardCover(compUIBoard, `Computer's Turn`);
+
+function toggleBoardCovers(...targetBoards) {
+  targetBoards.forEach((board) => {
+    const coverBoard = board.querySelector('.board-cover');
+    coverBoard.classList.toggle('hidden');
+  });
+}
+
 export {
   renderBoardCells,
   addDragEvents,
@@ -290,4 +309,5 @@ export {
   allShipsPlaced,
   battlePhase,
   toggleLoader,
+  toggleBoardCovers,
 };

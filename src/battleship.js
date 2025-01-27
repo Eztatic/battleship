@@ -6,6 +6,7 @@ import Player from './player.js';
 import Computer from './computer.js';
 import * as DOM from './dom.js';
 
+const player1UIBoard = document.querySelector('.board-1 .board');
 const compUIBoard = document.querySelector('.board-2 .board');
 
 const player1 = new Player('Player 1', new Gameboard());
@@ -14,6 +15,11 @@ const shipsLengths = [2, 3, 3, 4, 5];
 
 let playerShips = createShips(shipsLengths);
 let computerShips = createShips(shipsLengths);
+
+// First User Interaction
+// window.onload = () => {
+//   DOM.showGameModes();
+// };
 
 // Create ship objects
 function createShips(shipsLengths, ships = []) {
@@ -80,9 +86,17 @@ function clickCell(entity, e) {
     !cell.classList.contains('miss')
   ) {
     cell.classList.remove('on-select');
-    cell.classList.add(entity.gameboard.receiveAttack(x, y));
+    cell.classList.add(attackBoard(entity, x, y));
     play();
   }
+}
+
+function attackBoard(opponent, x, y) {
+  let attack = opponent.gameboard.receiveAttack(x, y);
+  if (checkWinner()) return;
+  switchTurn(player1, computer);
+  DOM.toggleBoardCovers(player1UIBoard, compUIBoard);
+  return attack;
 }
 
 // Helper Function: add cell events for user interaction
@@ -109,17 +123,16 @@ function battlePhase() {
   prepareComputerBoard();
   DOM.battlePhase();
   player1.turn = true;
+  DOM.toggleBoardCovers(player1UIBoard);
   setTimeout(() => DOM.toggleLoader(), 3000);
 }
 
 function checkWinner() {
-  console.log(displayCurrentTurn());
   if (player1.gameboard.allShipsSunk()) {
     return console.log('Computer Wins');
   } else if (computer.gameboard.allShipsSunk()) {
     return console.log('Player 1 Wins');
   }
-  return false;
 }
 
 function switchTurn(entity1, entity2) {
@@ -128,31 +141,23 @@ function switchTurn(entity1, entity2) {
   return entity1.turn ? entity1 : entity2;
 }
 
-function displayCurrentTurn() {
-  return switchTurn(player1, computer);
+function getCurrentTurn(entity1, entity2) {
+  return entity1.turn === true ? entity1 : entity2;
 }
 
-// Play also determines if the game should stop or not by checking if there
-// is a winner after each turn. If there is no winner the game continues by
-// switching each others turn until a winner is decided. If the winner is decided
-// proceed to announcement phase
 function play() {
-  if (checkWinner()) return;
-  console.log(computer.gameboard.board);
+  const currentTurn = getCurrentTurn(player1, computer);
+  if (currentTurn === computer) {
+    setTimeout(() => {
+      attackBoard(player1, ...computer.attackBoardRandomly(player1.gameboard));
+    }, 1000);
+  }
+  // console.log('currentTurn', currentTurn);
+  // console.table(player1.gameboard.board);
+  // console.table(computer.gameboard.board);
 }
 
 preparationPhase();
-
-// function startGame() {
-
-// }
-
-// startGame();
-
-// First User Interaction
-// window.onload = () => {
-//   DOM.showGameModes();
-// };
 
 // Export for testing
 // export {computer, playerShips, computerShips, createShips};

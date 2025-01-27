@@ -42,6 +42,7 @@ export default class Gameboard {
     const ship = 1;
     const hit = -1;
     const miss = -2;
+    let status = 'miss';
 
     switch (this.board[x][y]) {
       case empty:
@@ -57,9 +58,11 @@ export default class Gameboard {
         if (coord[0] === x && coord[1] === y) {
           ship.hit();
           ship.isSunk();
+          status = 'hit';
         }
       });
     });
+    return status;
   }
 
   allShipsSunk() {
