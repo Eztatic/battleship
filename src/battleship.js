@@ -86,17 +86,20 @@ function clickCell(entity, e) {
     !cell.classList.contains('miss')
   ) {
     cell.classList.remove('on-select');
-    cell.classList.add(attackBoard(entity, x, y));
+    attackBoard(entity, x, y);
     play();
   }
 }
 
+// Attack Board
 function attackBoard(opponent, x, y) {
-  let attack = opponent.gameboard.receiveAttack(x, y);
-  if (checkWinner()) return;
+  let impact = opponent.gameboard.receiveAttack(x, y);
+  let UIboard = document.querySelector('.board-cover.hidden').parentElement;
+  DOM.updateCell(UIboard, x, y, impact);
+  if (checkWinner(player1, computer)) endGame();
   switchTurn(player1, computer);
   DOM.toggleBoardCovers(player1UIBoard, compUIBoard);
-  return attack;
+  return impact;
 }
 
 // Helper Function: add cell events for user interaction
@@ -122,16 +125,28 @@ function battlePhase() {
   preparePlayerBoard();
   prepareComputerBoard();
   DOM.battlePhase();
-  player1.turn = true;
+  player1.switchTurn();
   DOM.toggleBoardCovers(player1UIBoard);
   setTimeout(() => DOM.toggleLoader(), 3000);
 }
 
-function checkWinner() {
-  if (player1.gameboard.allShipsSunk()) {
-    return console.log('Computer Wins');
-  } else if (computer.gameboard.allShipsSunk()) {
-    return console.log('Player 1 Wins');
+function checkWinner(entity1, entity2) {
+  if (entity1.gameboard.allShipsSunk()) {
+    return `${entity2.name} Wins`;
+  } else if (entity2.gameboard.allShipsSunk()) {
+    return `${entity1.name} Wins`;
+  }
+  return `${entity1.name} Wins`;
+}
+
+function endGame() {
+  const winner = checkWinner(player1, computer);
+  const board = winner === 'Computer Wins' ? compUIBoard : player1UIBoard;
+  const coverBoard = board.querySelector('.board-cover');
+  const hiddenBoard = document.querySelector('.board-cover.hidden');
+  if (winner) {
+    coverBoard.innerText = winner;
+    hiddenBoard.parentElement.style.pointerEvents = 'none';
   }
 }
 
@@ -154,7 +169,7 @@ function play() {
   }
   // console.log('currentTurn', currentTurn);
   // console.table(player1.gameboard.board);
-  // console.table(computer.gameboard.board);
+  console.table(computer.gameboard.board);
 }
 
 preparationPhase();

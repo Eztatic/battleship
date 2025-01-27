@@ -118,6 +118,13 @@ function getTargetCell(blocks, blockX, blockY, cellX, cellY) {
   return result[0];
 }
 
+function updateCell(UIboard, x, y, impact) {
+  const targetCell = UIboard.querySelector(
+    `.cell[data-x="${x}"][data-y="${y}"]`,
+  );
+  targetCell.classList.add(impact);
+}
+
 function outOfBounds(cell, block, boardLength, blockLength) {
   if (cell - block > boardLength - blockLength || cell - block < 0) return true;
 }
@@ -283,7 +290,7 @@ resetBtn.addEventListener('click', () => {
   shipDetails = [];
 });
 
-// Board Cover
+// Board Covers
 function addBoardCover(targetBoard, text) {
   const coverBoard = document.createElement('div');
   coverBoard.innerText = text;
@@ -302,12 +309,13 @@ function toggleBoardCovers(...targetBoards) {
 }
 
 export {
+  showGameModes,
   renderBoardCells,
   addDragEvents,
-  showGameModes,
   getShipDetails,
   allShipsPlaced,
-  battlePhase,
   toggleLoader,
+  battlePhase,
   toggleBoardCovers,
+  updateCell,
 };
