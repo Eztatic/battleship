@@ -33,4 +33,12 @@ export default class Computer {
       }
     }
   }
+
+  incrementScore() {
+    this.score++;
+  }
+
+  switchTurn() {
+    this.turn = this.turn ? false : true;
+  }
 }
