@@ -17,9 +17,10 @@ let playerShips = createShips(shipsLengths);
 let computerShips = createShips(shipsLengths);
 
 // First User Interaction
-// window.onload = () => {
-//   DOM.showGameModes();
-// };
+window.onload = () => {
+  DOM.showGameModes();
+  preparationPhase();
+};
 
 // Create ship objects
 function createShips(shipsLengths, ships = []) {
@@ -91,17 +92,37 @@ function clickCell(entity, e) {
   }
 }
 
-// Attack Board
-function attackBoard(opponent, x, y) {
-  let impact = opponent.gameboard.receiveAttack(x, y);
-  let UIboard = document.querySelector('.board-cover.hidden').parentElement;
-  DOM.updateCell(UIboard, x, y, impact);
-  if (checkWinner(player1, computer)) endGame();
-  switchTurn(player1, computer);
-  DOM.toggleBoardCovers(player1UIBoard, compUIBoard);
-  return impact;
+function validateClickedCell(x, y, impact) {
+  let uncoveredBoard = document.querySelector(
+    '.board-cover.hidden',
+  ).parentElement;
+  DOM.updateCell(uncoveredBoard, x, y, impact);
 }
 
+// Attack Board
+function attackBoard(opponent, x, y) {
+  const impact = opponent.gameboard.receiveAttack(x, y);
+  const toggleCovers = () => DOM.toggleBoardCovers(player1UIBoard, compUIBoard);
+
+  validateClickedCell(x, y, impact);
+
+  if (checkWinner(player1, computer)) {
+    endGame();
+    return 'game over';
+  }
+
+  if (impact === 'hit') return 'hit';
+
+  switchTurn(player1, computer);
+
+  if (opponent !== computer) {
+    setTimeout(toggleCovers, 1000);
+  } else {
+    toggleCovers();
+  }
+
+  return 'miss';
+}
 // Helper Function: add cell events for user interaction
 function addCellEvents(UIBoard, entity) {
   UIBoard.addEventListener('mouseover', hoverCell);
@@ -130,29 +151,9 @@ function battlePhase() {
   setTimeout(() => DOM.toggleLoader(), 3000);
 }
 
-function checkWinner(entity1, entity2) {
-  if (entity1.gameboard.allShipsSunk()) {
-    return `${entity2.name} Wins`;
-  } else if (entity2.gameboard.allShipsSunk()) {
-    return `${entity1.name} Wins`;
-  }
-  return `${entity1.name} Wins`;
-}
-
-function endGame() {
-  const winner = checkWinner(player1, computer);
-  const board = winner === 'Computer Wins' ? compUIBoard : player1UIBoard;
-  const coverBoard = board.querySelector('.board-cover');
-  const hiddenBoard = document.querySelector('.board-cover.hidden');
-  if (winner) {
-    coverBoard.innerText = winner;
-    hiddenBoard.parentElement.style.pointerEvents = 'none';
-  }
-}
-
 function switchTurn(entity1, entity2) {
-  entity1.turn = !entity1.turn;
-  entity2.turn = !entity2.turn;
+  entity1.switchTurn();
+  entity2.switchTurn();
   return entity1.turn ? entity1 : entity2;
 }
 
@@ -160,19 +161,53 @@ function getCurrentTurn(entity1, entity2) {
   return entity1.turn === true ? entity1 : entity2;
 }
 
+function checkWinner(entity1, entity2) {
+  if (entity1.gameboard.allShipsSunk()) {
+    return `${entity2.name} Wins`;
+  } else if (entity2.gameboard.allShipsSunk()) {
+    return `${entity1.name} Wins`;
+  }
+}
+
 function play() {
   const currentTurn = getCurrentTurn(player1, computer);
   if (currentTurn === computer) {
-    setTimeout(() => {
-      attackBoard(player1, ...computer.attackBoardRandomly(player1.gameboard));
-    }, 1000);
+    const computerTurn = () => {
+      const [x, y] = computer.attackBoardRandomly(player1.gameboard);
+      const result = attackBoard(player1, x, y);
+
+      if (result === 'game-over') {
+        return;
+      }
+
+      if (result === 'hit') {
+        setTimeout(computerTurn, 1000);
+      }
+    };
+
+    setTimeout(computerTurn, 1000);
   }
   // console.log('currentTurn', currentTurn);
   // console.table(player1.gameboard.board);
   console.table(computer.gameboard.board);
 }
 
-preparationPhase();
+function endGame() {
+  const winner = checkWinner(player1, computer);
+  const winnerBoard = winner === 'Player 1 Wins' ? player1UIBoard : compUIBoard;
+  const coverBoard = winnerBoard.querySelector('.board-cover');
+  const hiddenBoard = document.querySelector('.board-cover.hidden');
+  if (winner) {
+    coverBoard.innerText = winner;
+    hiddenBoard.parentElement.classList.add('not-selectable');
+    getCurrentTurn(player1, computer).incrementScore();
+    DOM.showScoreboard(player1.score, computer.score);
+  }
+}
+
+function playAgain() {
+  
+}
 
 // Export for testing
 // export {computer, playerShips, computerShips, createShips};

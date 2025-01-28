@@ -12,18 +12,35 @@
 </head>
 <body>
       <dialog class="game-modes">
-            <p>Choose Game Mode:</p>
-            <div class="computer">
-                  <img src="./images/vsAI.png" alt="icon" loading="lazy">
-                  <p>Computer</p>
+            <div class="content">
+                  <p>Choose Game Mode:</p>
+                  <div class="computer mode-container">
+                        <img src="./images/vsAI.png" alt="icon" loading="lazy">
+                        <p class="mode">Computer</p>
+                  </div>
+                  <div class="p2p mode-container">
+                        <img src="./images/vsPlayer2.png" alt="icon" loading="lazy">
+                        <p class="mode">P2P</p>
+                  </div>
             </div>
-            <div class="p2p">
-                  <img src="./images/vsPlayer2.png" alt="icon" loading="lazy">
-                  <p>P2P</p>
+      </dialog>
+      <dialog class="scoreboard">
+            <div class="content">
+                  <button class="close">✖</button>
+                  <p>Scoreboard</p>
+                  <div class="player-1">
+                        <p class="score">0</p>
+                        <p class="name">Player 1</p>
+                  </div>
+                  <div class="opponent">
+                        <p class="score">0</p>
+                        <p class="name">Computer</p>
+                  </div>
             </div>
       </dialog>
 
       <img id="game-logo" src="./images/battleship-logo.png" alt="logo" loading="lazy">
+
       <main>     
             <div class="board-1">
                   <h1 class="title">Player 1</h1>
@@ -89,7 +106,7 @@
                   <button class="rotateBtn">🔄 Rotate Ships</button>
             </div>
       </main>
-
+      
       <div class="loader hidden">
             <p class="instruction">Preparing Battle Phase</p>
       </div>

@@ -15,57 +15,10 @@ body {
   background-color: var(--neutral);
 }
 
-dialog.show {
-  background-color: var(--light);
-  padding: 2.5rem 4rem;
-  border-radius: 2rem;
-  outline: 4px solid var(--dark);
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: grid;
-  grid-template-rows: 0.01fr 1fr;
-  grid-template-columns: 1fr 1fr;
-  place-items: center;
-  gap: 2rem;
-}
-
-dialog::backdrop {
-  background: rgba(255, 255, 255, 0.25);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-  backdrop-filter: blur(17px);
-  -webkit-backdrop-filter: blur(17px);
-}
-
-dialog > p {
-  font-size: 2.5rem;
-  font-weight: 500;
-  grid-column: span 2;
-}
-
-dialog > div > p {
-  font-size: 1.5rem;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-dialog > div {
-  padding: 4rem 2rem;
-  cursor: pointer;
-}
-
-dialog > div:hover {
-  background: rgba(131, 131, 131, 0.5);
-  box-shadow: 0 8px 32px 0 rgba(150, 150, 150, 0.7);
-  backdrop-filter: blur(1.5px);
-  -webkit-backdrop-filter: blur(1.5px);
-  border-radius: 10px;
-  outline: 1px solid rgba(255, 255, 255, 0.18);
-}
-
-dialog img {
-  height: 150px;
+main {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 
 #game-logo {
@@ -79,10 +32,94 @@ dialog img {
   -webkit-user-drag: none;
 }
 
-main {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
+/* Dialogs */
+
+dialog > .content {
+  background-color: var(--light);
+  padding: 2.5rem 4rem;
+  border-radius: 2rem;
+  outline: 4px solid var(--dark);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: grid;
+  grid-template-rows: 0.01fr 1fr;
+  grid-template-columns: 1fr 1fr;
+  place-items: center;
+  gap: 1rem;
+  z-index: 999;
+}
+
+dialog::backdrop {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(17px);
+  -webkit-backdrop-filter: blur(17px);
+}
+
+dialog p {
+  font-size: 2.5rem;
+  font-weight: 500;
+  grid-column: span 2;
+}
+
+/* Game Mode Dialog */
+
+dialog.game-modes .mode,
+dialog.scoreboard .name {
+  font-size: 1.5rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+dialog.game-modes > .content > .mode-container {
+  padding: 4rem 2rem;
+  cursor: pointer;
+}
+
+dialog.game-modes > .content > .mode-container:hover {
+  background: rgba(131, 131, 131, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(150, 150, 150, 0.7);
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  border-radius: 10px;
+  outline: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+dialog.game-modes img {
+  height: 150px;
+}
+
+/* Scoreboard Dialog */
+
+dialog.scoreboard .score {
+  font-weight: 700;
+  font-size: 6rem;
+  text-align: center;
+}
+
+dialog.scoreboard .name {
+  margin-top: 0;
+}
+
+dialog.scoreboard .close {
+  font-size: 2rem;
+  color: var(--light);
+  background-color: var(--neutral);
+  width: 50px;
+  height: 50px;
+  outline: 2px solid var(--dark);
+  border-radius: 50%;
+  position: absolute;
+  top: -20px;
+  right: -20px;
+  cursor: pointer;
+}
+
+dialog.scoreboard .close:hover {
+  background-color: var(--light);
+  color: var(--dark);
 }
 
 /* Board */
@@ -234,7 +271,7 @@ main {
   font-weight: 700;
   width: 100%;
   height: 100%;
-  background: rgba(0, 83, 119, 0.9);
+  background: rgb(49, 106, 131);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   position: absolute;
@@ -243,9 +280,10 @@ main {
   align-items: center;
   user-select: none;
   -webkit-user-drag: none;
+  z-index: 1;
   transition:
-    opacity 0.5s ease,
-    visibility 0.5s ease;
+    opacity 0.25s ease,
+    visibility 0.25s ease;
 }
 
 /* Cell Styling */
@@ -255,7 +293,7 @@ main {
 }
 
 .not-selectable {
-  cursor: not-allowed;
+  cursor: initial;
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -289,6 +327,7 @@ main {
   align-items: center;
   justify-content: center;
   background-color: var(--neutral);
+  z-index: 2;
   transition:
     opacity 0.75s ease-out,
     visibility 0.75s ease-out;

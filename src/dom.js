@@ -1,4 +1,5 @@
 const gameMode = document.querySelector('.game-modes');
+const scoreboard = document.querySelector('.scoreboard');
 const player1UIBoard = document.querySelector('.board-1 .board');
 const compUIBoard = document.querySelector('.board-2 .board');
 const ships = document.querySelectorAll('.ship');
@@ -11,18 +12,29 @@ const boardLength = 100;
 let cells = [];
 let targetCells = [];
 let shipDetails = [];
-let draggedShip = null;
 let currentBlock = null;
+let draggedShip = null;
 let successDrop = false;
 let blockPositions = 'horizontal';
-// let hitOrMiss = 'miss';
 
 function showGameModes() {
   gameMode.showModal();
-  gameMode.classList.add('show');
+
   vsComputer.addEventListener('click', () => {
     gameMode.close();
-    gameMode.classList.remove('show');
+  });
+}
+
+function showScoreboard(score1, score2) {
+  const closeBtn = scoreboard.querySelector('.close');
+  const player1Score = scoreboard.querySelector('.player-1 .score');
+  const opponentScore = scoreboard.querySelector('.opponent .score');
+  player1Score.innerText = score1;
+  opponentScore.innerText = score2;
+  scoreboard.showModal();
+
+  closeBtn.addEventListener('click', () => {
+    scoreboard.close();
   });
 }
 
@@ -318,4 +330,5 @@ export {
   battlePhase,
   toggleBoardCovers,
   updateCell,
+  showScoreboard,
 };
