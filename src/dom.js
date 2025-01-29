@@ -48,19 +48,26 @@ function showScoreboard(score1, score2) {
   });
 }
 
-function playAgain(board, boardClass) {
+function endRound(board, boardClass) {
+  playAgainBtn.classList.add('hidden');
+  hideAllBoardCovers();
+  resetShipHandler();
+  battlePhaseOff();
+  preparationPhase(board, boardClass);
+}
+
+function showPlayAgainBtn() {
   playAgainBtn.classList.remove('hidden');
-  playAgainBtn.addEventListener('click', () => {
-    playAgainBtn.classList.add('hidden');
-    hideAllBoardCovers();
-    resetShipHandler();
-    battlePhaseOff();
-    preparationPhase(board, boardClass);
-  });
+}
+
+function setupPlayAgain(board, boardClass) {
+  const boundEndRound = endRound.bind(null, board, boardClass);
+  playAgainBtn.addEventListener('click', boundEndRound);
 }
 
 // Board Functions
 
+// Render UI board cells
 function renderBoardCells(board, boardClass) {
   board.forEach((row, x) => {
     row.forEach((col, y) => {
@@ -73,6 +80,7 @@ function renderBoardCells(board, boardClass) {
   });
 }
 
+// Add drag events to cells where ships are to be placed
 function addDragEvents(UIBoard) {
   cells = document.querySelectorAll(`.${UIBoard} .cell`);
   cells.forEach((cell) => {
@@ -83,13 +91,14 @@ function addDragEvents(UIBoard) {
   });
 }
 
+// Check if all UI ships are placed
 function allShipsPlaced(ships) {
   return Array.from(ships).some((ship) => {
     if (!ship.classList.contains('hidden')) return true;
   });
 }
 
-// Select all cells and remove
+// Remove all cells in boards
 function resetBoards(...boards) {
   boards.forEach((board) => {
     const cells = board.querySelectorAll('.cell');
@@ -126,6 +135,7 @@ function toggleLoader() {
 
 // Helper Functions
 
+// Remove highlights for every target cells highlighted
 function removeHighlights() {
   targetCells.forEach((cell) => {
     cell.classList.remove('highlight');
@@ -133,48 +143,40 @@ function removeHighlights() {
   targetCells = [];
 }
 
+function getTargetCell(block, blockX, blockY, cellX, cellY) {
+  const offsetX = parseInt(block.dataset.offsetX) - blockX;
+  const offsetY = parseInt(block.dataset.offsetY) - blockY;
+  const targetCell = document.querySelector(
+    `.cell[data-x="${cellX + offsetX}"][data-y="${cellY + offsetY}"]`,
+  );
+  return targetCell;
+}
+
+function addTargetCell(targetCells, targetCell, block) {
+  targetCells.push({
+    x: parseInt(targetCell.dataset.x),
+    y: parseInt(targetCell.dataset.y),
+    position: blockPositions,
+    length: parseInt(block.parentElement.dataset.size),
+  });
+}
+
 function validateCells(blocks, blockX, blockY, cellX, cellY, cb) {
-  let result = false;
+  const targetCells = [];
 
   blocks.forEach((block) => {
-    const offsetX = parseInt(block.dataset.offsetX) - blockX;
-    const offsetY = parseInt(block.dataset.offsetY) - blockY;
-    const targetCell = document.querySelector(
-      `.cell[data-x="${cellX + offsetX}"][data-y="${cellY + offsetY}"]`,
-    );
+    let targetCell = getTargetCell(block, blockX, blockY, cellX, cellY);
 
-    if (targetCell) cb(targetCell);
-
-    if (targetCell && targetCell.classList.contains('filled')) {
-      result = true;
+    if (targetCell) {
+      addTargetCell(targetCells, targetCell, block);
+      cb(targetCell);
     }
   });
 
-  return result;
+  return targetCells[0];
 }
 
-function getTargetCell(blocks, blockX, blockY, cellX, cellY) {
-  let result = [];
-
-  blocks.forEach((block) => {
-    const offsetX = parseInt(block.dataset.offsetX) - blockX;
-    const offsetY = parseInt(block.dataset.offsetY) - blockY;
-    const targetCell = document.querySelector(
-      `.cell[data-x="${cellX + offsetX}"][data-y="${cellY + offsetY}"]`,
-    );
-
-    if (targetCell)
-      result.push({
-        x: parseInt(targetCell.dataset.x),
-        y: parseInt(targetCell.dataset.y),
-        position: blockPositions,
-        length: parseInt(block.parentElement.dataset.size),
-      });
-  });
-
-  return result[0];
-}
-
+// Validate and Update style of clicked cell
 function updateCell(UIboard, x, y, impact) {
   const targetCell = UIboard.querySelector(
     `.cell[data-x="${x}"][data-y="${y}"]`,
@@ -182,16 +184,19 @@ function updateCell(UIboard, x, y, impact) {
   targetCell.classList.add(impact);
 }
 
+// Check if ship placement is out of bounds
 function outOfBounds(cell, block, boardLength, blockLength) {
   if (cell - block > boardLength - blockLength || cell - block < 0) return true;
 }
 
+// Sorts ship details in ascending order before available for access
 function getShipDetails() {
   return shipDetails.sort((a, b) => {
     return a.length - b.length;
   });
 }
 
+// Add drag events for every UI ships
 ships.forEach((ship) => {
   const blocks = ship.querySelectorAll('.block');
   blocks.forEach((block) => {
@@ -201,22 +206,25 @@ ships.forEach((ship) => {
   ship.addEventListener('dragend', dragEnd);
 });
 
-// Event Handlers
+// Drag Event Handlers
 
 function dragStart(e) {
+  // Set dragged ship to the current ship being dragged
   draggedShip = this;
 
-  // Auto offset
+  // Get offset for accurate placement of ships in board
   const rect = this.getBoundingClientRect();
   const offsetX = event.clientX - rect.left;
   const offsetY = event.clientY - rect.top;
 
-  // Ghost Element
+  // Customize ghost element or on drag element by making a
+  // copy of the current dragged element
   const ghost = draggedShip.cloneNode(true);
   ghost.style.opacity = '0.5';
   document.body.appendChild(ghost);
   e.dataTransfer.setDragImage(ghost, offsetX, offsetY);
 
+  // When ship has started dragging hide its origin element
   setTimeout(() => {
     draggedShip.classList.add('hidden');
     document.body.removeChild(ghost);
@@ -224,7 +232,10 @@ function dragStart(e) {
 }
 
 function dragEnd() {
+  // If ship was dragged but not placed, restore the ships visibility
   if (!successDrop) draggedShip.classList.remove('hidden');
+  // If ship was placed successfully, reset drag details and remove highlighted
+  // styles in board
   draggedShip = null;
   successDrop = false;
   removeHighlights();
@@ -243,6 +254,8 @@ function dragEnter(e) {
   const currentBlockX = parseInt(currentBlock.dataset.offsetX);
   const currentBlockY = parseInt(currentBlock.dataset.offsetY);
 
+  // Highlight cells that are available for placement based on
+  // dragged ship's position and length
   validateCells(
     blocks,
     currentBlockX,
@@ -271,12 +284,14 @@ function dropShip(e) {
   const currentBlockY = parseInt(currentBlock.dataset.offsetY);
   const blockLength = parseInt(currentBlock.parentElement.dataset.size);
 
+  // Check if a vertical ship placement is out of bounds
   if (
     blockPositions === 'vertical' &&
     outOfBounds(startX, currentBlockX, boardLength, blockLength)
   ) {
     return;
   }
+  // Check if a horizontal ship placement is out of bounds
   if (
     blockPositions === 'horizontal' &&
     outOfBounds(startY, currentBlockY, boardLength, blockLength)
@@ -284,12 +299,14 @@ function dropShip(e) {
     return;
   }
 
+  // Check if the intended placement of the ship is not empty
   const isFilled = Array.from(blocks).some((block) => {
-    const offsetX = parseInt(block.dataset.offsetX) - currentBlockX;
-    const offsetY = parseInt(block.dataset.offsetY) - currentBlockY;
-
-    const targetCell = document.querySelector(
-      `.cell[data-x="${startX + offsetX}"][data-y="${startY + offsetY}"]`,
+    let targetCell = getTargetCell(
+      block,
+      currentBlockX,
+      currentBlockY,
+      startX,
+      startY,
     );
 
     if (targetCell === null) return true;
@@ -297,7 +314,8 @@ function dropShip(e) {
   });
   if (isFilled) return;
 
-  validateCells(
+  // Place ship if it passes all conditions(out of bounds, filled placement)
+  const firstTargetCell = validateCells(
     blocks,
     currentBlockX,
     currentBlockY,
@@ -309,27 +327,24 @@ function dropShip(e) {
     },
   );
 
-  const firstTargetCell = getTargetCell(
-    blocks,
-    currentBlockX,
-    currentBlockY,
-    startX,
-    startY,
-  );
+  // Store ship details by getting the ships x, y, position, and length to
+  // be stored in the database
   shipDetails.push(firstTargetCell);
 
+  // If ship has been placed successfully change status to true
   successDrop = true;
 }
 
 // Button Events
 
+// Rotate ships
 rotateBtn.addEventListener('click', () => {
-  ships.forEach((shape) => {
-    const isHorizontal = shape.dataset.position === 'horizontal';
+  ships.forEach((ship) => {
+    const isHorizontal = ship.dataset.position === 'horizontal';
     blockPositions = isHorizontal ? 'vertical' : 'horizontal';
-    shape.dataset.position = isHorizontal ? 'vertical' : 'horizontal';
-    shape.style.flexDirection = isHorizontal ? 'column' : 'row';
-    shape.querySelectorAll('.block').forEach((block) => {
+    ship.dataset.position = isHorizontal ? 'vertical' : 'horizontal';
+    ship.style.flexDirection = isHorizontal ? 'column' : 'row';
+    ship.querySelectorAll('.block').forEach((block) => {
       [block.dataset.offsetX, block.dataset.offsetY] = [
         block.dataset.offsetY,
         block.dataset.offsetX,
@@ -338,6 +353,7 @@ rotateBtn.addEventListener('click', () => {
   });
 });
 
+// Restore ships to default state
 const resetShipHandler = () => {
   if (!cells) return;
   cells.forEach((cell) => {
@@ -347,6 +363,7 @@ const resetShipHandler = () => {
   shipDetails = [];
 };
 
+// Add event to reset button
 resetBtn.addEventListener('click', resetShipHandler);
 
 // Board Covers
@@ -384,5 +401,6 @@ export {
   toggleBoardCovers,
   updateCell,
   showScoreboard,
-  playAgain,
+  showPlayAgainBtn,
+  setupPlayAgain,
 };
