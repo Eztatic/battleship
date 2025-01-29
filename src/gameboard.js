@@ -68,4 +68,9 @@ export default class Gameboard {
   allShipsSunk() {
     return this.ships.every((ship) => ship.sunk === true);
   }
+
+  resetBoard() {
+    this.board = this.createBoard();
+    this.ships = [];
+  }
 }

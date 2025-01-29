@@ -2,11 +2,16 @@ const gameMode = document.querySelector('.game-modes');
 const scoreboard = document.querySelector('.scoreboard');
 const player1UIBoard = document.querySelector('.board-1 .board');
 const compUIBoard = document.querySelector('.board-2 .board');
+const compBoardContainer = document.querySelector('.board-2');
+const shipContainer = document.querySelector('.ships');
 const ships = document.querySelectorAll('.ship');
-const resetBtn = document.querySelector('.resetBtn');
-const rotateBtn = document.querySelector('.rotateBtn');
+const resetBtn = document.querySelector('.reset-button');
+const rotateBtn = document.querySelector('.rotate-button');
+const finishBtn = document.querySelector('.finish-button');
+const buttonContainers = document.querySelector('.board-buttons');
 const vsComputer = document.querySelector('.computer');
 const loader = document.querySelector('.loader');
+const playAgainBtn = document.querySelector('.play-again-button');
 const boardLength = 100;
 
 let cells = [];
@@ -17,11 +22,16 @@ let draggedShip = null;
 let successDrop = false;
 let blockPositions = 'horizontal';
 
-function showGameModes() {
+function showGameModes(battleFunction) {
   gameMode.showModal();
 
   vsComputer.addEventListener('click', () => {
     gameMode.close();
+  });
+
+  finishBtn.addEventListener('click', () => {
+    if (allShipsPlaced(ships)) return alert('Must place all ships');
+    battleFunction();
   });
 }
 
@@ -38,14 +48,27 @@ function showScoreboard(score1, score2) {
   });
 }
 
-function renderBoardCells(board, UIBoard) {
+function playAgain(board, boardClass) {
+  playAgainBtn.classList.remove('hidden');
+  playAgainBtn.addEventListener('click', () => {
+    playAgainBtn.classList.add('hidden');
+    hideAllBoardCovers();
+    resetShipHandler();
+    battlePhaseOff();
+    preparationPhase(board, boardClass);
+  });
+}
+
+// Board Functions
+
+function renderBoardCells(board, boardClass) {
   board.forEach((row, x) => {
     row.forEach((col, y) => {
       const cell = document.createElement('div');
       cell.classList.add('cell');
       cell.dataset.x = x;
       cell.dataset.y = y;
-      document.querySelector(`.${UIBoard} .board`).appendChild(cell);
+      document.querySelector(`.${boardClass} .board`).appendChild(cell);
     });
   });
 }
@@ -66,11 +89,33 @@ function allShipsPlaced(ships) {
   });
 }
 
-// TASK: Make attack on computer board feature
-function battlePhase() {
-  document.querySelector('.ships').classList.add('hidden');
-  document.querySelector('.boardBtns').classList.add('hidden');
-  document.querySelector('.board-2').classList.remove('hidden');
+// Select all cells and remove
+function resetBoards(...boards) {
+  boards.forEach((board) => {
+    const cells = board.querySelectorAll('.cell');
+    cells.forEach((cell) => {
+      cell.remove();
+    });
+  });
+}
+
+// Gameplay Functions
+function preparationPhase(board, boardClass) {
+  resetBoards(player1UIBoard, compUIBoard);
+  renderBoardCells(board, boardClass);
+  addDragEvents(boardClass);
+}
+
+function battlePhaseOn() {
+  shipContainer.classList.add('hidden');
+  buttonContainers.classList.add('hidden');
+  compBoardContainer.classList.remove('hidden');
+}
+
+function battlePhaseOff() {
+  shipContainer.classList.remove('hidden');
+  buttonContainers.classList.remove('hidden');
+  compBoardContainer.classList.add('hidden');
 }
 
 function toggleLoader() {
@@ -293,14 +338,16 @@ rotateBtn.addEventListener('click', () => {
   });
 });
 
-resetBtn.addEventListener('click', () => {
+const resetShipHandler = () => {
   if (!cells) return;
   cells.forEach((cell) => {
     cell.classList.remove('filled');
   });
   ships.forEach((ship) => ship.classList.remove('hidden'));
   shipDetails = [];
-});
+};
+
+resetBtn.addEventListener('click', resetShipHandler);
 
 // Board Covers
 function addBoardCover(targetBoard, text) {
@@ -320,15 +367,22 @@ function toggleBoardCovers(...targetBoards) {
   });
 }
 
+function hideAllBoardCovers() {
+  const boardCovers = document.querySelectorAll('.board-cover');
+  boardCovers.forEach((cover) => cover.classList.add('hidden'));
+}
+
 export {
   showGameModes,
+  preparationPhase,
   renderBoardCells,
   addDragEvents,
   getShipDetails,
   allShipsPlaced,
   toggleLoader,
-  battlePhase,
+  battlePhaseOn,
   toggleBoardCovers,
   updateCell,
   showScoreboard,
+  playAgain,
 };

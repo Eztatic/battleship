@@ -13,6 +13,7 @@
 
 body {
   background-color: var(--neutral);
+  width: 100vw;
 }
 
 main {
@@ -48,7 +49,7 @@ dialog > .content {
   grid-template-columns: 1fr 1fr;
   place-items: center;
   gap: 1rem;
-  z-index: 999;
+  z-index: 1;
 }
 
 dialog::backdrop {
@@ -92,6 +93,12 @@ dialog.game-modes img {
 }
 
 /* Scoreboard Dialog */
+
+dialog.scoreboard {
+  transition:
+    opacity 0.5s ease,
+    visibility 0.5s ease;
+}
 
 dialog.scoreboard .score {
   font-weight: 700;
@@ -218,13 +225,13 @@ dialog.scoreboard .close:hover {
 
 /* Buttons */
 
-.boardBtns {
+.board-buttons {
   display: flex;
   justify-content: space-between;
   margin-top: 6px;
 }
 
-.ships > .rotateBtn {
+.ships > .rotate-button {
   padding: 0.75rem 1rem;
   grid-row: 4;
   grid-column: 3;
@@ -232,9 +239,7 @@ dialog.scoreboard .close:hover {
   align-self: end;
 }
 
-.resetBtn,
-.finishBtn,
-.rotateBtn {
+[class$='button'] {
   background-color: var(--light);
   font-size: 1.25rem;
   font-weight: 500;
@@ -246,10 +251,17 @@ dialog.scoreboard .close:hover {
   cursor: pointer;
 }
 
-.rotateBtn:hover,
-.finishBtn:hover,
-.resetBtn:hover {
+[class$='button']:hover {
   opacity: 0.75;
+}
+
+.play-again-button {
+  padding: 1rem 2rem;
+  display: block;
+  position: absolute;
+  top: 57.5%;
+  left: 50%;
+  transform: translate(-50%, -57.5%);
 }
 
 /* Visibility */
@@ -280,7 +292,7 @@ dialog.scoreboard .close:hover {
   align-items: center;
   user-select: none;
   -webkit-user-drag: none;
-  z-index: 1;
+  z-index: 2;
   transition:
     opacity 0.25s ease,
     visibility 0.25s ease;
@@ -327,7 +339,7 @@ dialog.scoreboard .close:hover {
   align-items: center;
   justify-content: center;
   background-color: var(--neutral);
-  z-index: 2;
+  z-index: 3;
   transition:
     opacity 0.75s ease-out,
     visibility 0.75s ease-out;

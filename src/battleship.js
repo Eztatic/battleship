@@ -13,13 +13,10 @@ const player1 = new Player('Player 1', new Gameboard());
 const computer = new Computer(new Gameboard());
 const shipsLengths = [2, 3, 3, 4, 5];
 
-let playerShips = createShips(shipsLengths);
-let computerShips = createShips(shipsLengths);
-
 // First User Interaction
 window.onload = () => {
-  DOM.showGameModes();
-  preparationPhase();
+  DOM.showGameModes(battlePhase);
+  DOM.preparationPhase(player1.gameboard.board, 'board-1', battlePhase);
 };
 
 // Create ship objects
@@ -31,21 +28,22 @@ function createShips(shipsLengths, ships = []) {
 }
 
 // Ship deployment phase
-function preparationPhase() {
-  const finishBtn = document.querySelector('.finishBtn');
-  const UIships = document.querySelectorAll('.ship');
+// function preparationPhase() {
+//   const finishBtn = document.querySelector('.finish-button');
+//   const UIships = document.querySelectorAll('.ship');
 
-  DOM.renderBoardCells(player1.gameboard.board, 'board-1');
-  DOM.addDragEvents('board-1');
+//   DOM.renderBoardCells(player1.gameboard.board, 'board-1');
+//   DOM.addDragEvents('board-1');
 
-  finishBtn.addEventListener('click', () => {
-    if (DOM.allShipsPlaced(UIships)) return alert('Must place all ships');
-    battlePhase();
-  });
-}
+//   finishBtn.addEventListener('click', () => {
+//     if (DOM.allShipsPlaced(UIships)) return alert('Must place all ships');
+//     battlePhase();
+//   });
+// }
 
 // Get ship coordinates from the UI board and update gameboard data
-function placePlayerShips(playerShips) {
+function placePlayerShips() {
+  const playerShips = createShips(shipsLengths);
   const shipDetails = DOM.getShipDetails();
   for (let i = 0; i < shipsLengths.length; i++) {
     player1.gameboard.placeShip(
@@ -59,6 +57,7 @@ function placePlayerShips(playerShips) {
 
 // Place computer ships randomly
 function placeComputerShips() {
+  const computerShips = createShips(shipsLengths);
   computerShips.forEach((ship) => {
     computer.placeShipRandomly(ship);
   });
@@ -131,7 +130,7 @@ function addCellEvents(UIBoard, entity) {
 
 // Render player board and deploy ships
 function preparePlayerBoard() {
-  placePlayerShips(playerShips);
+  placePlayerShips();
 }
 
 // Render computer board and deploy ships
@@ -143,11 +142,14 @@ function prepareComputerBoard() {
 
 function battlePhase() {
   DOM.toggleLoader();
+  resetTurns(player1, computer);
+  resetBoardData(player1, computer);
   preparePlayerBoard();
   prepareComputerBoard();
-  DOM.battlePhase();
   player1.switchTurn();
+  DOM.battlePhaseOn();
   DOM.toggleBoardCovers(player1UIBoard);
+  console.log(player1, computer);
   setTimeout(() => DOM.toggleLoader(), 3000);
 }
 
@@ -189,7 +191,7 @@ function play() {
   }
   // console.log('currentTurn', currentTurn);
   // console.table(player1.gameboard.board);
-  console.table(computer.gameboard.board);
+  // console.table(computer.gameboard.board);
 }
 
 function endGame() {
@@ -202,11 +204,18 @@ function endGame() {
     hiddenBoard.parentElement.classList.add('not-selectable');
     getCurrentTurn(player1, computer).incrementScore();
     DOM.showScoreboard(player1.score, computer.score);
+    DOM.playAgain(player1.gameboard.board, 'board-1');
   }
 }
 
-function playAgain() {
-  
+function resetBoardData(entity1, entity2) {
+  entity1.gameboard.resetBoard();
+  entity2.gameboard.resetBoard();
+}
+
+function resetTurns(entity1, entity2) {
+  entity1.turn = false;
+  entity2.turn = false;
 }
 
 // Export for testing
