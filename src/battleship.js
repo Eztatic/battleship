@@ -1,4 +1,4 @@
-// import './style.css';
+import './style.css';
 import './dom.js';
 import Gameboard from './gameboard.js';
 import Ship from './ship.js';
@@ -6,8 +6,8 @@ import Player from './player.js';
 import Computer from './computer.js';
 import * as DOM from './dom.js';
 
-const player1UIBoard = document.querySelector('.board-1 .board');
-const compUIBoard = document.querySelector('.board-2 .board');
+const player1UIBoard = document.querySelector('.board-1');
+const compUIBoard = document.querySelector('.board-2');
 
 const player1 = new Player('Player 1', new Gameboard());
 const computer = new Computer(new Gameboard());
@@ -16,7 +16,8 @@ const shipsLengths = [2, 3, 3, 4, 5];
 // First User Interaction
 window.onload = () => {
   DOM.showGameModes(battlePhase);
-  DOM.preparationPhase(player1.gameboard.board, 'board-1', battlePhase);
+  DOM.preparationPhase(player1.gameboard.board, player1UIBoard, battlePhase);
+  DOM.setupPlayAgain(player1.gameboard.board, player1UIBoard);
 };
 
 // Create ship objects
@@ -27,21 +28,7 @@ function createShips(shipsLengths, ships = []) {
   return ships;
 }
 
-// Ship deployment phase
-// function preparationPhase() {
-//   const finishBtn = document.querySelector('.finish-button');
-//   const UIships = document.querySelectorAll('.ship');
-
-//   DOM.renderBoardCells(player1.gameboard.board, 'board-1');
-//   DOM.addDragEvents('board-1');
-
-//   finishBtn.addEventListener('click', () => {
-//     if (DOM.allShipsPlaced(UIships)) return alert('Must place all ships');
-//     battlePhase();
-//   });
-// }
-
-// Get ship coordinates from the UI board and update gameboard data
+// Get ship details from the UI board and update gameboard data
 function placePlayerShips() {
   const playerShips = createShips(shipsLengths);
   const shipDetails = DOM.getShipDetails();
@@ -63,69 +50,44 @@ function placeComputerShips() {
   });
 }
 
-// Event handler for when hovering cells
-function hoverCell(e) {
-  const cell = e.target;
-  if (
-    cell.classList.contains('cell') &&
-    !cell.classList.contains('hit') &&
-    !cell.classList.contains('miss')
-  ) {
-    cell.classList.add('on-select');
-  }
-}
-
-// Event handler for when clicking cells
-function clickCell(entity, e) {
-  const cell = e.target;
-  const x = parseInt(e.target.dataset.x);
-  const y = parseInt(e.target.dataset.y);
-  if (
-    cell.classList.contains('cell') &&
-    !cell.classList.contains('hit') &&
-    !cell.classList.contains('miss')
-  ) {
-    cell.classList.remove('on-select');
-    attackBoard(entity, x, y);
-    play();
-  }
-}
-
-function validateClickedCell(x, y, impact) {
-  let uncoveredBoard = document.querySelector(
-    '.board-cover.hidden',
-  ).parentElement;
-  DOM.updateCell(uncoveredBoard, x, y, impact);
+// Callback: execute attack on board
+function executeAttack(entity, x, y) {
+  attackBoard(entity, x, y);
+  play();
 }
 
 // Attack Board
 function attackBoard(opponent, x, y) {
+  // Get impact(miss/hit) on the cell that was attacked
   const impact = opponent.gameboard.receiveAttack(x, y);
   const toggleCovers = () => DOM.toggleBoardCovers(player1UIBoard, compUIBoard);
 
-  validateClickedCell(x, y, impact);
+  // Validate clicked cell based on impact
+  DOM.validateClickedCell(x, y, impact);
 
+  // If there is a winner, execute end game functionality
   if (checkWinner(player1, computer)) {
     endGame();
     return 'game over';
   }
 
+  // If there is no winner and impact was hit return hit
   if (impact === 'hit') return 'hit';
 
+  // If there is no winner and impact was not hit, switch turn
+  // between two individuals
   switchTurn(player1, computer);
 
+  // If computer attacks switching cover boards may have a short delay
+  // If player attacks switch cover boards with no delay
   if (opponent !== computer) {
     setTimeout(toggleCovers, 1000);
   } else {
     toggleCovers();
   }
 
+  // Return 'miss' as there was no winner and attack was not on hit
   return 'miss';
-}
-// Helper Function: add cell events for user interaction
-function addCellEvents(UIBoard, entity) {
-  UIBoard.addEventListener('mouseover', hoverCell);
-  UIBoard.addEventListener('click', (e) => clickCell(entity, e));
 }
 
 // Render player board and deploy ships
@@ -136,8 +98,18 @@ function preparePlayerBoard() {
 // Render computer board and deploy ships
 function prepareComputerBoard() {
   placeComputerShips();
-  DOM.renderBoardCells(computer.gameboard.board, 'board-2');
-  addCellEvents(compUIBoard, computer);
+  DOM.renderBoardCells(computer.gameboard.board, compUIBoard);
+  DOM.addCellEvents(compUIBoard, computer, executeAttack);
+}
+
+function resetBoardData(entity1, entity2) {
+  entity1.gameboard.resetBoard();
+  entity2.gameboard.resetBoard();
+}
+
+function resetTurns(entity1, entity2) {
+  entity1.turn = false;
+  entity2.turn = false;
 }
 
 function battlePhase() {
@@ -149,8 +121,8 @@ function battlePhase() {
   player1.switchTurn();
   DOM.battlePhaseOn();
   DOM.toggleBoardCovers(player1UIBoard);
-  console.log(player1, computer);
   setTimeout(() => DOM.toggleLoader(), 3000);
+  console.log(player1, computer);
 }
 
 function switchTurn(entity1, entity2) {
@@ -204,18 +176,8 @@ function endGame() {
     hiddenBoard.parentElement.classList.add('not-selectable');
     getCurrentTurn(player1, computer).incrementScore();
     DOM.showScoreboard(player1.score, computer.score);
-    DOM.playAgain(player1.gameboard.board, 'board-1');
+    DOM.showPlayAgainBtn();
   }
-}
-
-function resetBoardData(entity1, entity2) {
-  entity1.gameboard.resetBoard();
-  entity2.gameboard.resetBoard();
-}
-
-function resetTurns(entity1, entity2) {
-  entity1.turn = false;
-  entity2.turn = false;
 }
 
 // Export for testing

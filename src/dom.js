@@ -1,19 +1,23 @@
 const gameMode = document.querySelector('.game-modes');
+const vsComputer = document.querySelector('.computer');
+
+const player1UIBoard = document.querySelector('.board-1');
+const compUIBoard = document.querySelector('.board-2');
 const scoreboard = document.querySelector('.scoreboard');
-const player1UIBoard = document.querySelector('.board-1 .board');
-const compUIBoard = document.querySelector('.board-2 .board');
-const compBoardContainer = document.querySelector('.board-2');
+
 const shipContainer = document.querySelector('.ships');
 const ships = document.querySelectorAll('.ship');
+
+const buttonContainers = document.querySelector('.board-buttons');
 const resetBtn = document.querySelector('.reset-button');
 const rotateBtn = document.querySelector('.rotate-button');
 const finishBtn = document.querySelector('.finish-button');
-const buttonContainers = document.querySelector('.board-buttons');
-const vsComputer = document.querySelector('.computer');
-const loader = document.querySelector('.loader');
+const closeScoreboardBtn = scoreboard.querySelector('.close');
 const playAgainBtn = document.querySelector('.play-again-button');
-const boardLength = 100;
 
+const loader = document.querySelector('.loader');
+
+const boardLength = 100;
 let cells = [];
 let targetCells = [];
 let shipDetails = [];
@@ -24,11 +28,6 @@ let blockPositions = 'horizontal';
 
 function showGameModes(battleFunction) {
   gameMode.showModal();
-
-  vsComputer.addEventListener('click', () => {
-    gameMode.close();
-  });
-
   finishBtn.addEventListener('click', () => {
     if (allShipsPlaced(ships)) return alert('Must place all ships');
     battleFunction();
@@ -36,53 +35,48 @@ function showGameModes(battleFunction) {
 }
 
 function showScoreboard(score1, score2) {
-  const closeBtn = scoreboard.querySelector('.close');
   const player1Score = scoreboard.querySelector('.player-1 .score');
   const opponentScore = scoreboard.querySelector('.opponent .score');
   player1Score.innerText = score1;
   opponentScore.innerText = score2;
   scoreboard.showModal();
-
-  closeBtn.addEventListener('click', () => {
-    scoreboard.close();
-  });
 }
 
-function endRound(board, boardClass) {
+function endRound(boardData, UIBoard) {
   playAgainBtn.classList.add('hidden');
   hideAllBoardCovers();
-  resetShipHandler();
   battlePhaseOff();
-  preparationPhase(board, boardClass);
+  preparationPhase(boardData, UIBoard);
+}
+
+function setupPlayAgain(boardData, UIBoard) {
+  const boundEndRound = endRound.bind(null, boardData, UIBoard);
+  playAgainBtn.addEventListener('click', boundEndRound);
 }
 
 function showPlayAgainBtn() {
   playAgainBtn.classList.remove('hidden');
 }
 
-function setupPlayAgain(board, boardClass) {
-  const boundEndRound = endRound.bind(null, board, boardClass);
-  playAgainBtn.addEventListener('click', boundEndRound);
-}
-
-// Board Functions
+// BOARD FUNCTIONS
 
 // Render UI board cells
-function renderBoardCells(board, boardClass) {
-  board.forEach((row, x) => {
+function renderBoardCells(boardData, UIBoard) {
+  const board = UIBoard.querySelector('.board');
+  boardData.forEach((row, x) => {
     row.forEach((col, y) => {
       const cell = document.createElement('div');
       cell.classList.add('cell');
       cell.dataset.x = x;
       cell.dataset.y = y;
-      document.querySelector(`.${boardClass} .board`).appendChild(cell);
+      board.appendChild(cell);
     });
   });
 }
 
 // Add drag events to cells where ships are to be placed
 function addDragEvents(UIBoard) {
-  cells = document.querySelectorAll(`.${UIBoard} .cell`);
+  cells = UIBoard.querySelectorAll(`.cell`);
   cells.forEach((cell) => {
     cell.addEventListener('dragover', dragOver);
     cell.addEventListener('dragenter', dragEnter);
@@ -99,8 +93,8 @@ function allShipsPlaced(ships) {
 }
 
 // Remove all cells in boards
-function resetBoards(...boards) {
-  boards.forEach((board) => {
+function resetBoards(...UIBoards) {
+  UIBoards.forEach((board) => {
     const cells = board.querySelectorAll('.cell');
     cells.forEach((cell) => {
       cell.remove();
@@ -108,23 +102,72 @@ function resetBoards(...boards) {
   });
 }
 
-// Gameplay Functions
-function preparationPhase(board, boardClass) {
+// CELL FUNCTIONS
+
+function hoverCell(e) {
+  const cell = e.target;
+  if (
+    cell.classList.contains('cell') &&
+    !cell.classList.contains('hit') &&
+    !cell.classList.contains('miss')
+  ) {
+    cell.classList.add('on-select');
+  }
+}
+
+function clickCell(entity, cb, e) {
+  const cell = e.target;
+  const x = parseInt(e.target.dataset.x);
+  const y = parseInt(e.target.dataset.y);
+  if (
+    cell.classList.contains('cell') &&
+    !cell.classList.contains('hit') &&
+    !cell.classList.contains('miss')
+  ) {
+    cell.classList.remove('on-select');
+    cb(entity, x, y);
+  }
+}
+
+function validateClickedCell(x, y, impact) {
+  let uncoveredBoard = document.querySelector(
+    '.board-cover.hidden',
+  ).parentElement;
+  updateCell(uncoveredBoard, x, y, impact);
+}
+
+function addCellEvents(UIBoard, entity, cb) {
+  const board = UIBoard.querySelector('.board');
+  board.addEventListener('mouseover', hoverCell);
+  board.addEventListener('click', (e) => clickCell(entity, cb, e));
+}
+
+function updateCell(UIboard, x, y, impact) {
+  const targetCell = UIboard.querySelector(
+    `.cell[data-x="${x}"][data-y="${y}"]`,
+  );
+  targetCell.classList.add(impact);
+}
+
+// GAMEPLAY FUNCTIONS
+
+function preparationPhase(boardData, UIBoard) {
+  resetShipHandler();
   resetBoards(player1UIBoard, compUIBoard);
-  renderBoardCells(board, boardClass);
-  addDragEvents(boardClass);
+  renderBoardCells(boardData, UIBoard);
+  addDragEvents(UIBoard);
 }
 
 function battlePhaseOn() {
   shipContainer.classList.add('hidden');
   buttonContainers.classList.add('hidden');
-  compBoardContainer.classList.remove('hidden');
+  compUIBoard.classList.remove('hidden');
 }
 
 function battlePhaseOff() {
   shipContainer.classList.remove('hidden');
   buttonContainers.classList.remove('hidden');
-  compBoardContainer.classList.add('hidden');
+  compUIBoard.classList.add('hidden');
 }
 
 function toggleLoader() {
@@ -133,7 +176,17 @@ function toggleLoader() {
 
 // DRAG N DROP FEATURE
 
-// Helper Functions
+// Add drag events for every UI ships
+ships.forEach((ship) => {
+  const blocks = ship.querySelectorAll('.block');
+  blocks.forEach((block) => {
+    block.addEventListener('mousedown', () => (currentBlock = block));
+  });
+  ship.addEventListener('dragstart', dragStart);
+  ship.addEventListener('dragend', dragEnd);
+});
+
+// HELPER FUNCTIONS
 
 // Remove highlights for every target cells highlighted
 function removeHighlights() {
@@ -143,6 +196,7 @@ function removeHighlights() {
   targetCells = [];
 }
 
+// Get target cell
 function getTargetCell(block, blockX, blockY, cellX, cellY) {
   const offsetX = parseInt(block.dataset.offsetX) - blockX;
   const offsetY = parseInt(block.dataset.offsetY) - blockY;
@@ -152,6 +206,7 @@ function getTargetCell(block, blockX, blockY, cellX, cellY) {
   return targetCell;
 }
 
+// Store target cells
 function addTargetCell(targetCells, targetCell, block) {
   targetCells.push({
     x: parseInt(targetCell.dataset.x),
@@ -161,6 +216,7 @@ function addTargetCell(targetCells, targetCell, block) {
   });
 }
 
+// Validate target cells
 function validateCells(blocks, blockX, blockY, cellX, cellY, cb) {
   const targetCells = [];
 
@@ -176,14 +232,6 @@ function validateCells(blocks, blockX, blockY, cellX, cellY, cb) {
   return targetCells[0];
 }
 
-// Validate and Update style of clicked cell
-function updateCell(UIboard, x, y, impact) {
-  const targetCell = UIboard.querySelector(
-    `.cell[data-x="${x}"][data-y="${y}"]`,
-  );
-  targetCell.classList.add(impact);
-}
-
 // Check if ship placement is out of bounds
 function outOfBounds(cell, block, boardLength, blockLength) {
   if (cell - block > boardLength - blockLength || cell - block < 0) return true;
@@ -196,17 +244,7 @@ function getShipDetails() {
   });
 }
 
-// Add drag events for every UI ships
-ships.forEach((ship) => {
-  const blocks = ship.querySelectorAll('.block');
-  blocks.forEach((block) => {
-    block.addEventListener('mousedown', () => (currentBlock = block));
-  });
-  ship.addEventListener('dragstart', dragStart);
-  ship.addEventListener('dragend', dragEnd);
-});
-
-// Drag Event Handlers
+// DRAG EVENT HANDLERS
 
 function dragStart(e) {
   // Set dragged ship to the current ship being dragged
@@ -335,10 +373,9 @@ function dropShip(e) {
   successDrop = true;
 }
 
-// Button Events
+// EVENT HANDLERS FOR BUTTONS
 
-// Rotate ships
-rotateBtn.addEventListener('click', () => {
+const rotateShipHandler = () => {
   ships.forEach((ship) => {
     const isHorizontal = ship.dataset.position === 'horizontal';
     blockPositions = isHorizontal ? 'vertical' : 'horizontal';
@@ -351,9 +388,8 @@ rotateBtn.addEventListener('click', () => {
       ];
     });
   });
-});
+};
 
-// Restore ships to default state
 const resetShipHandler = () => {
   if (!cells) return;
   cells.forEach((cell) => {
@@ -363,16 +399,26 @@ const resetShipHandler = () => {
   shipDetails = [];
 };
 
-// Add event to reset button
-resetBtn.addEventListener('click', resetShipHandler);
+// ADD BUTTON EVENTS
 
-// Board Covers
+rotateBtn.addEventListener('click', rotateShipHandler);
+resetBtn.addEventListener('click', resetShipHandler);
+closeScoreboardBtn.addEventListener('click', () => {
+  scoreboard.close();
+});
+vsComputer.addEventListener('click', () => {
+  gameMode.close();
+});
+
+// BOARD COVERS FUNCTIONALITY
+
 function addBoardCover(targetBoard, text) {
+  const board = targetBoard.querySelector('.board');
   const coverBoard = document.createElement('div');
   coverBoard.innerText = text;
   coverBoard.classList.add('board-cover');
   coverBoard.classList.add('hidden');
-  targetBoard.appendChild(coverBoard);
+  board.appendChild(coverBoard);
 }
 addBoardCover(player1UIBoard, `Player 1's Turn`);
 addBoardCover(compUIBoard, `Computer's Turn`);
@@ -395,7 +441,6 @@ export {
   renderBoardCells,
   addDragEvents,
   getShipDetails,
-  allShipsPlaced,
   toggleLoader,
   battlePhaseOn,
   toggleBoardCovers,
@@ -403,4 +448,6 @@ export {
   showScoreboard,
   showPlayAgainBtn,
   setupPlayAgain,
+  validateClickedCell,
+  addCellEvents,
 };
