@@ -41,7 +41,7 @@ describe('Gameboard test', () => {
     ]);
   });
 
-  test('When place ship must return true/false', () => {
+  test('Ship out of bounds', () => {
     expect(gameboard.placeShip(9, 0, ship1, 'vertical')).toEqual(false);
   });
 
@@ -79,7 +79,7 @@ describe('Gameboard test', () => {
 
   test('Ship overlap', () => {
     gameboard.placeShip(0, 7, ship1, 'horizontal');
-    expect(gameboard.placeShip(0, 9, ship1, 'vertical')).toEqual(false);
+    expect(gameboard.placeShip(0, 7, ship1, 'vertical')).toEqual(false);
   });
 
   test('Place two ship', () => {
@@ -134,7 +134,7 @@ describe('Gameboard test', () => {
     expect(ship1.sunk).toBe(true);
   });
 
-  test('If all ships sunk in gameboard', () => {
+  test('Check if all ships sunk in gameboard', () => {
     gameboard.placeShip(0, 0, ship1, 'horizontal');
     gameboard.receiveAttack(0, 0);
     gameboard.receiveAttack(0, 1);

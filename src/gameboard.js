@@ -13,56 +13,64 @@ export default class Gameboard {
     return board;
   }
 
+  isOutOfBounds(x, y, ship, direction) {
+    return (
+      (direction === 'horizontal' && y > 10 - ship.length) ||
+      (direction === 'vertical' && x > 10 - ship.length)
+    );
+  }
+
   placeShip(x, y, ship, direction) {
-    if (direction === 'horizontal' && y > 10 - ship.length) return false;
-    if (direction === 'vertical' && x > 10 - ship.length) return false;
+    if (this.isOutOfBounds(x, y, ship, direction)) return false;
 
-    // Check placement if empty
+    const coordinates = [];
+
     for (let i = 0; i < ship.length; i++) {
       const row = direction === 'vertical' ? x + i : x;
       const col = direction === 'horizontal' ? y + i : y;
-      if (this.board[row][col] === 1) {
-        return false;
-      }
+      if (this.board[row][col] === 1) return false;
+      coordinates.push([row, col]);
     }
 
-    // Place ship in board
-    for (let i = 0; i < ship.length; i++) {
-      const row = direction === 'vertical' ? x + i : x;
-      const col = direction === 'horizontal' ? y + i : y;
-      ship.coordinates.push([row, col]);
-      this.board[row][col] = 1;
-    }
+    coordinates.forEach(([row, col]) => (this.board[row][col] = 1));
+    ship.coordinates = coordinates;
     this.ships.push(ship);
+
     return true;
   }
 
-  receiveAttack(x, y) {
-    const empty = 0;
-    const ship = 1;
-    const hit = -1;
-    const miss = -2;
-    let status = 'miss';
+  validateAttack(x, y) {
+    const boardCell = this.board[x][y];
 
-    switch (this.board[x][y]) {
-      case empty:
-        this.board[x][y] = miss;
-        break;
-      case ship:
-        this.board[x][y] = hit;
-        break;
+    if (boardCell === 0) {
+      this.board[x][y] = -2;
+      return 'miss';
     }
 
-    this.ships.forEach((ship) => {
-      ship.coordinates.forEach((coord) => {
-        if (coord[0] === x && coord[1] === y) {
-          ship.hit();
-          ship.isSunk();
-          status = 'hit';
+    if (boardCell === 1) {
+      this.board[x][y] = -1;
+      return 'hit';
+    }
+
+    return 'invalid';
+  }
+
+  receiveAttack(x, y) {
+    const result = this.validateAttack(x, y);
+
+    if (result === 'hit') {
+      for (const ship of this.ships) {
+        for (const [shipX, shipY] of ship.coordinates) {
+          if (shipX === x && shipY === y) {
+            ship.hit();
+            ship.isSunk();
+            return 'hit';
+          }
         }
-      });
-    });
-    return status;
+      }
+    }
+
+    return result;
   }
 
   allShipsSunk() {

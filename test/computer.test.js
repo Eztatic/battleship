@@ -1,4 +1,4 @@
-import Computer from '../src/Computer.js';
+import Computer from '../src/computer.js';
 import Gameboard from '../src/gameboard.js';
 import Ship from '../src/ship.js';
 
