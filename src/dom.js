@@ -10,6 +10,7 @@ const ships = document.querySelectorAll('.ship');
 
 const buttonContainers = document.querySelector('.board-buttons');
 const resetBtn = document.querySelector('.reset-button');
+const randomBtn = document.querySelector('.randomize-button');
 const rotateBtn = document.querySelector('.rotate-button');
 const finishBtn = document.querySelector('.finish-button');
 const closeScoreboardBtn = scoreboard.querySelector('.close');
@@ -58,6 +59,18 @@ function showPlayAgainBtn() {
   playAgainBtn.classList.remove('hidden');
 }
 
+function setupRandomBtn(UIBoard, cb) {
+  randomBtn.addEventListener('click', () => {
+    const boardData = cb();
+    resetBoards(UIBoard);
+    renderBoardCells(boardData, UIBoard);
+    addFilled(boardData, UIBoard);
+    addDragEvents(UIBoard);
+    hideAllShips();
+    cells = UIBoard.querySelectorAll('.cell');
+  });
+}
+
 // BOARD FUNCTIONS
 
 // Render UI board cells
@@ -70,6 +83,18 @@ function renderBoardCells(boardData, UIBoard) {
       cell.dataset.x = x;
       cell.dataset.y = y;
       board.appendChild(cell);
+    });
+  });
+}
+
+function addFilled(boardData, UIBoard) {
+  const board = UIBoard.querySelector('.board');
+  boardData.forEach((row, x) => {
+    row.forEach((col, y) => {
+      if (boardData[x][y] === 1) {
+        const cell = board.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+        cell.classList.add('filled');
+      }
     });
   });
 }
@@ -185,6 +210,10 @@ ships.forEach((ship) => {
   ship.addEventListener('dragstart', dragStart);
   ship.addEventListener('dragend', dragEnd);
 });
+
+function hideAllShips() {
+  ships.forEach((ship) => ship.classList.add('hidden'));
+}
 
 // HELPER FUNCTIONS
 
@@ -403,12 +432,8 @@ const resetShipHandler = () => {
 
 rotateBtn.addEventListener('click', rotateShipHandler);
 resetBtn.addEventListener('click', resetShipHandler);
-closeScoreboardBtn.addEventListener('click', () => {
-  scoreboard.close();
-});
-vsComputer.addEventListener('click', () => {
-  gameMode.close();
-});
+closeScoreboardBtn.addEventListener('click', () => scoreboard.close());
+vsComputer.addEventListener('click', () => gameMode.close());
 
 // BOARD COVERS FUNCTIONALITY
 
@@ -450,4 +475,5 @@ export {
   setupPlayAgain,
   validateClickedCell,
   addCellEvents,
+  setupRandomBtn,
 };

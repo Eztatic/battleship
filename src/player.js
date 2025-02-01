@@ -6,6 +6,21 @@ export default class Player {
     this.gameboard = board;
   }
 
+  placeShipRandomly(ship) {
+    while (true) {
+      const randomX = Math.floor(Math.random() * 10);
+      const randomY = Math.floor(Math.random() * 10);
+      const randomDirection = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+      const placedShip = this.gameboard.placeShip(
+        randomX,
+        randomY,
+        ship,
+        randomDirection,
+      );
+      if (placedShip) break;
+    }
+  }
+
   incrementScore() {
     this.score++;
   }
@@ -14,4 +29,3 @@ export default class Player {
     this.turn = this.turn ? false : true;
   }
 }
-

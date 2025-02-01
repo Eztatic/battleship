@@ -1,4 +1,4 @@
-import './style.css';
+// import './style.css';
 import Gameboard from './gameboard.js';
 import Ship from './ship.js';
 import Player from './player.js';
@@ -17,6 +17,7 @@ window.onload = () => {
   DOM.showGameModes(battlePhase);
   DOM.preparationPhase(player1.gameboard.board, player1UIBoard, battlePhase);
   DOM.setupPlayAgain(player1.gameboard.board, player1UIBoard);
+  DOM.setupRandomBtn(player1UIBoard, () => randomButtonCB(player1));
 };
 
 // Create ship objects
@@ -27,8 +28,21 @@ function createShips(shipsLengths, ships = []) {
   return ships;
 }
 
+// Random button callback function
+function randomButtonCB(player) {
+  const playerShips = createShips(shipsLengths);
+  player.gameboard.resetBoard();
+  playerShips.forEach((ship) => {
+    player.placeShipRandomly(ship);
+  });
+  return player.gameboard.board;
+}
+
 // Get ship details from the UI board and update gameboard data
 function placePlayerShips() {
+  const alreadyPlaced = player1.gameboard.ships.length === 5;
+  if (alreadyPlaced) return;
+  resetBoardData(player1, computer);
   const playerShips = createShips(shipsLengths);
   const shipDetails = DOM.getShipDetails();
   for (let i = 0; i < shipsLengths.length; i++) {
@@ -114,7 +128,6 @@ function resetTurns(entity1, entity2) {
 function battlePhase() {
   DOM.toggleLoader();
   resetTurns(player1, computer);
-  resetBoardData(player1, computer);
   preparePlayerBoard();
   prepareComputerBoard();
   player1.switchTurn();
@@ -160,9 +173,6 @@ function play() {
 
     setTimeout(computerTurn, 1000);
   }
-  // console.log('currentTurn', currentTurn);
-  // console.table(player1.gameboard.board);
-  // console.table(computer.gameboard.board);
 }
 
 function endGame() {

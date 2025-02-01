@@ -232,6 +232,7 @@ dialog.scoreboard .close:hover {
 }
 
 .ships > .rotate-button {
+  width: 13rem;
   padding: 0.75rem 1rem;
   grid-row: 4;
   grid-column: 3;
@@ -243,7 +244,7 @@ dialog.scoreboard .close:hover {
   background-color: var(--light);
   font-size: 1.25rem;
   font-weight: 500;
-  width: 13rem;
+  width: 10rem;
   height: fit-content;
   padding: 0.5rem 2rem;
   border: none;
@@ -256,6 +257,7 @@ dialog.scoreboard .close:hover {
 }
 
 .play-again-button {
+  width: 13rem;
   padding: 1rem 2rem;
   display: block;
   position: absolute;
