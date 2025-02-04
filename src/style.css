@@ -180,6 +180,7 @@ dialog.scoreboard .close:hover {
 
 .ships > div {
   background-color: var(--light);
+  width: 334px;
   padding: 1rem 1.5rem;
   border-radius: 1rem;
   display: flex;

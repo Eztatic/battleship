@@ -34,6 +34,26 @@ export default class Computer {
     }
   }
 
+  enhancedAttackMode(opponentBoard, lastShipHit) {
+    const [x, y] = lastShipHit;
+    const directions = [
+      {xOffset: -1, yOffset: 0}, // top
+      {xOffset: 1, yOffset: 0}, // bottom
+      {xOffset: 0, yOffset: -1}, // left
+      {xOffset: 0, yOffset: 1}, // right
+    ];
+
+    for (const {xOffset, yOffset} of directions) {
+      const target = opponentBoard.board[x + xOffset]?.[y + yOffset];
+
+      if (target !== undefined && target >= 0) {
+        return [x + xOffset, y + yOffset];
+      }
+    }
+
+    return undefined;
+  }
+
   incrementScore() {
     this.score++;
   }

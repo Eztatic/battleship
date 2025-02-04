@@ -31,7 +31,7 @@ function createShips(shipsLengths, ships = []) {
 // Random button callback function
 function randomButtonCB(player) {
   const playerShips = createShips(shipsLengths);
-  player.gameboard.resetBoard();
+  resetBoardData(player1, computer);
   playerShips.forEach((ship) => {
     player.placeShipRandomly(ship);
   });
@@ -42,7 +42,6 @@ function randomButtonCB(player) {
 function placePlayerShips() {
   const alreadyPlaced = player1.gameboard.ships.length === 5;
   if (alreadyPlaced) return;
-  resetBoardData(player1, computer);
   const playerShips = createShips(shipsLengths);
   const shipDetails = DOM.getShipDetails();
   for (let i = 0; i < shipsLengths.length; i++) {
@@ -167,11 +166,30 @@ function play() {
       }
 
       if (result === 'hit') {
-        setTimeout(computerTurn, 1000);
+        setTimeout(() => attackAdjacent(player1, [x, y]), 1000);
+        // setTimeout(computerTurn, 1000);
       }
     };
 
     setTimeout(computerTurn, 1000);
+  }
+}
+
+function attackAdjacent(opponent, lastHit) {
+  const nextAttack = computer.enhancedAttackMode(opponent.gameboard, lastHit);
+
+  if (nextAttack) {
+    const [newX, newY] = nextAttack;
+    const newResult = attackBoard(opponent, newX, newY);
+
+    if (newResult === 'game-over') {
+      return;
+    }
+
+    if (newResult === 'hit') {
+      // Continue the attack if the target was hit
+      setTimeout(() => attackAdjacent(opponent, nextAttack), 1000);
+    }
   }
 }
 
@@ -186,5 +204,6 @@ function endGame() {
     getCurrentTurn(player1, computer).incrementScore();
     DOM.showScoreboard(player1.score, computer.score);
     DOM.showPlayAgainBtn();
+    resetBoardData(player1, computer);
   }
 }
