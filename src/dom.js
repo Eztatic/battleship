@@ -1,8 +1,20 @@
+import {
+  player1,
+  computer,
+  randomPlacement,
+  startRound,
+  play,
+  attackBoard,
+  resetBoardData,
+} from './battleship.js';
+
 const gameMode = document.querySelector('.game-modes');
 const vsComputer = document.querySelector('.computer');
+const vsP2 = document.querySelector('.p2p');
 
 const player1UIBoard = document.querySelector('.board-1');
-const compUIBoard = document.querySelector('.board-2');
+const player2UIBoard = document.querySelector('.board-2');
+const compUIBoard = document.querySelector('.board-3');
 const scoreboard = document.querySelector('.scoreboard');
 
 const shipContainer = document.querySelector('.ships');
@@ -19,6 +31,7 @@ const playAgainBtn = document.querySelector('.play-again-button');
 const loader = document.querySelector('.loader');
 
 const boardLength = 100;
+let mode = 'vsAI';
 let cells = [];
 let targetCells = [];
 let shipDetails = [];
@@ -27,13 +40,27 @@ let draggedShip = null;
 let successDrop = false;
 let blockPositions = 'horizontal';
 
-function showGameModes(battleFunction) {
+function showGameModes() {
   gameMode.showModal();
-  finishBtn.addEventListener('click', () => {
-    if (allShipsPlaced(ships)) return alert('Must place all ships');
-    battleFunction();
-  });
 }
+
+vsComputer.addEventListener('click', () => {
+  player1UIBoard.classList.add('active');
+  compUIBoard.classList.add('active');
+  mode = 'vsAI';
+  preparationPhase(player1.gameboard.board, player1UIBoard);
+  setupPlayAgainBtn(player1.gameboard.board, player1UIBoard);
+  setupRandomBtn(player1, player1UIBoard);
+  setupFinishBtn();
+  gameMode.close();
+});
+
+vsP2.addEventListener('click', () => {
+  player1UIBoard.classList.add('active');
+  player2UIBoard.classList.add('active');
+  mode = 'P2P';
+  gameMode.close();
+});
 
 function showScoreboard(score1, score2) {
   const player1Score = scoreboard.querySelector('.player-1 .score');
@@ -50,24 +77,30 @@ function endRound(boardData, UIBoard) {
   preparationPhase(boardData, UIBoard);
 }
 
-function setupPlayAgain(boardData, UIBoard) {
-  const boundEndRound = endRound.bind(null, boardData, UIBoard);
-  playAgainBtn.addEventListener('click', boundEndRound);
-}
-
 function showPlayAgainBtn() {
   playAgainBtn.classList.remove('hidden');
 }
 
-function setupRandomBtn(UIBoard, cb) {
+function setupPlayAgainBtn(boardData, UIBoard) {
+  playAgainBtn.addEventListener('click', () => endRound(boardData, UIBoard));
+}
+
+function setupRandomBtn(player, UIBoard) {
   randomBtn.addEventListener('click', () => {
-    const boardData = cb();
+    const boardData = randomPlacement(player);
     resetBoards(UIBoard);
     renderBoardCells(boardData, UIBoard);
     addFilled(boardData, UIBoard);
     addDragEvents(UIBoard);
     hideAllShips();
     cells = UIBoard.querySelectorAll('.cell');
+  });
+}
+
+function setupFinishBtn() {
+  finishBtn.addEventListener('click', () => {
+    if (allShipsPlaced(ships)) return alert('Must place all ships');
+    battlePhaseOn();
   });
 }
 
@@ -127,6 +160,24 @@ function resetBoards(...UIBoards) {
   });
 }
 
+function updateUIBoard(opponent, x, y, impact) {
+  const toggleCovers = () => toggleBoardCovers(player1UIBoard, compUIBoard);
+  if (impact === 'game over') return;
+  validateClickedCell(x, y, impact);
+  if (impact === 'hit') return;
+  if (opponent !== computer) {
+    setTimeout(toggleCovers, 1000);
+  } else {
+    toggleCovers();
+  }
+}
+
+// For single player function
+function renderComputerBoard() {
+  renderBoardCells(computer.gameboard.board, compUIBoard);
+  addCellEvents(compUIBoard, computer);
+}
+
 // CELL FUNCTIONS
 
 function hoverCell(e) {
@@ -140,7 +191,7 @@ function hoverCell(e) {
   }
 }
 
-function clickCell(entity, cb, e) {
+function clickCell(opponent, e) {
   const cell = e.target;
   const x = parseInt(e.target.dataset.x);
   const y = parseInt(e.target.dataset.y);
@@ -150,25 +201,26 @@ function clickCell(entity, cb, e) {
     !cell.classList.contains('miss')
   ) {
     cell.classList.remove('on-select');
-    cb(entity, x, y);
+    updateUIBoard(opponent, x, y, attackBoard(opponent, x, y));
+    play();
   }
 }
 
 function validateClickedCell(x, y, impact) {
   let uncoveredBoard = document.querySelector(
-    '.board-cover.hidden',
-  ).parentElement;
+    '.active:has(.board-cover.hidden)',
+  );
   updateCell(uncoveredBoard, x, y, impact);
 }
 
-function addCellEvents(UIBoard, entity, cb) {
+function addCellEvents(UIBoard, opponent) {
   const board = UIBoard.querySelector('.board');
   board.addEventListener('mouseover', hoverCell);
-  board.addEventListener('click', (e) => clickCell(entity, cb, e));
+  board.addEventListener('click', (e) => clickCell(opponent, e));
 }
 
-function updateCell(UIboard, x, y, impact) {
-  const targetCell = UIboard.querySelector(
+function updateCell(UIBoard, x, y, impact) {
+  const targetCell = UIBoard.querySelector(
     `.cell[data-x="${x}"][data-y="${y}"]`,
   );
   targetCell.classList.add(impact);
@@ -187,6 +239,12 @@ function battlePhaseOn() {
   shipContainer.classList.add('hidden');
   buttonContainers.classList.add('hidden');
   compUIBoard.classList.remove('hidden');
+  toggleLoader();
+  startRound();
+  renderComputerBoard();
+  toggleBoardCovers(player1UIBoard);
+  setTimeout(() => toggleLoader(), 3000);
+  console.log(player1, computer);
 }
 
 function battlePhaseOff() {
@@ -426,6 +484,7 @@ const resetShipHandler = () => {
   });
   ships.forEach((ship) => ship.classList.remove('hidden'));
   shipDetails = [];
+  resetBoardData(player1);
 };
 
 // ADD BUTTON EVENTS
@@ -433,7 +492,6 @@ const resetShipHandler = () => {
 rotateBtn.addEventListener('click', rotateShipHandler);
 resetBtn.addEventListener('click', resetShipHandler);
 closeScoreboardBtn.addEventListener('click', () => scoreboard.close());
-vsComputer.addEventListener('click', () => gameMode.close());
 
 // BOARD COVERS FUNCTIONALITY
 
@@ -446,6 +504,7 @@ function addBoardCover(targetBoard, text) {
   board.appendChild(coverBoard);
 }
 addBoardCover(player1UIBoard, `Player 1's Turn`);
+addBoardCover(player2UIBoard, `Player 2's Turn`);
 addBoardCover(compUIBoard, `Computer's Turn`);
 
 function toggleBoardCovers(...targetBoards) {
@@ -462,18 +521,8 @@ function hideAllBoardCovers() {
 
 export {
   showGameModes,
-  preparationPhase,
-  renderBoardCells,
-  addDragEvents,
   getShipDetails,
-  toggleLoader,
-  battlePhaseOn,
-  toggleBoardCovers,
-  updateCell,
   showScoreboard,
   showPlayAgainBtn,
-  setupPlayAgain,
-  validateClickedCell,
-  addCellEvents,
-  setupRandomBtn,
+  updateUIBoard,
 };
