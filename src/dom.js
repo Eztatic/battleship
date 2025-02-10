@@ -1,7 +1,10 @@
+import './style.css';
 import {
   player1,
+  player2,
   computer,
   randomPlacement,
+  placePlayerShips,
   startRound,
   play,
   attackBoard,
@@ -20,72 +23,142 @@ const scoreboard = document.querySelector('.scoreboard');
 const shipContainer = document.querySelector('.ships');
 const ships = document.querySelectorAll('.ship');
 
-const buttonContainers = document.querySelector('.board-buttons');
-const resetBtn = document.querySelector('.reset-button');
-const randomBtn = document.querySelector('.randomize-button');
+const buttonContainers = document.querySelectorAll('.board-buttons');
 const rotateBtn = document.querySelector('.rotate-button');
-const finishBtn = document.querySelector('.finish-button');
 const closeScoreboardBtn = scoreboard.querySelector('.close');
 const playAgainBtn = document.querySelector('.play-again-button');
 
 const loader = document.querySelector('.loader');
 
 const boardLength = 100;
-let mode = 'vsAI';
+let mode;
 let cells = [];
-let targetCells = [];
+let currentBoard = [];
 let shipDetails = [];
 let currentBlock = null;
 let draggedShip = null;
 let successDrop = false;
 let blockPositions = 'horizontal';
 
-function showGameModes() {
-  gameMode.showModal();
-}
-
 vsComputer.addEventListener('click', () => {
+  mode = 'vsAI';
   player1UIBoard.classList.add('active');
   compUIBoard.classList.add('active');
-  mode = 'vsAI';
-  preparationPhase(player1.gameboard.board, player1UIBoard);
-  setupPlayAgainBtn(player1.gameboard.board, player1UIBoard);
+  preparationPhase(player1, player1UIBoard);
+  setupResetBtn(player1, player1UIBoard);
   setupRandomBtn(player1, player1UIBoard);
-  setupFinishBtn();
+  setupFinishBtn(player1UIBoard, () => {
+    battlePhaseOn();
+  });
   gameMode.close();
 });
 
 vsP2.addEventListener('click', () => {
+  mode = 'P2P';
   player1UIBoard.classList.add('active');
   player2UIBoard.classList.add('active');
-  mode = 'P2P';
+  preparationPhase(player1, player1UIBoard);
+  setupResetBtn(player1, player1UIBoard);
+  setupResetBtn(player2, player2UIBoard);
+  setupRandomBtn(player1, player1UIBoard);
+  setupRandomBtn(player2, player2UIBoard);
+  setupFinishBtn(player1UIBoard, () => {
+    toggleLoader();
+    player1UIBoard.classList.add('hidden');
+    player2UIBoard.classList.remove('hidden');
+    placePlayerShips(player1);
+    preparationPhase(player2, player2UIBoard);
+    setTimeout(() => toggleLoader(), 1000);
+  });
+  setupFinishBtn(player2UIBoard, () => {
+    player1UIBoard.classList.remove('hidden');
+    battlePhaseOn();
+  });
   gameMode.close();
 });
+
+function getMode() {
+  return mode;
+}
+
+// GAMEPLAY FUNCTIONS
+
+function preparationPhase(player, UIBoard) {
+  resetShipHandler(player);
+  resetBoards(UIBoard);
+  renderBoardCells(player.gameboard.board, UIBoard);
+  addDragEvents(UIBoard);
+}
+
+function battlePhaseOn() {
+  toggleLoader();
+
+  shipContainer.classList.add('hidden');
+  buttonContainers.forEach((cont) => {
+    cont.classList.add('hidden');
+  });
+
+  if (mode === 'vsAI') {
+    compUIBoard.classList.remove('hidden');
+    startRound(mode);
+    renderComputerBoard();
+  } else if (mode === 'P2P') {
+    player1UIBoard.classList.remove('hidden');
+    hideFilled(player2UIBoard);
+    startRound(mode);
+    renderPlayerBoards();
+  }
+
+  toggleBoardCovers(player1UIBoard);
+  setTimeout(() => toggleLoader(), 3000);
+  // console.log(player1, player2, computer);
+}
+
+function battlePhaseOff() {
+  shipContainer.classList.remove('hidden');
+  buttonContainers.forEach((cont) => {
+    cont.classList.remove('hidden');
+  });
+  compUIBoard.classList.add('hidden');
+  player2UIBoard.classList.add('hidden');
+}
+
+function toggleLoader() {
+  loader.classList.toggle('hidden');
+}
+
+function endRound() {
+  playAgainBtn.classList.add('hidden');
+  hideAllBoardCovers();
+  battlePhaseOff();
+  preparationPhase(player1, player1UIBoard);
+}
 
 function showScoreboard(score1, score2) {
   const player1Score = scoreboard.querySelector('.player-1 .score');
   const opponentScore = scoreboard.querySelector('.opponent .score');
+  if (mode === 'P2P')
+    scoreboard.querySelector('.opponent .name').innerText = 'Player 2';
   player1Score.innerText = score1;
   opponentScore.innerText = score2;
   scoreboard.showModal();
 }
 
-function endRound(boardData, UIBoard) {
-  playAgainBtn.classList.add('hidden');
-  hideAllBoardCovers();
-  battlePhaseOff();
-  preparationPhase(boardData, UIBoard);
-}
+// SETUP BUTTONS
 
 function showPlayAgainBtn() {
   playAgainBtn.classList.remove('hidden');
 }
 
-function setupPlayAgainBtn(boardData, UIBoard) {
-  playAgainBtn.addEventListener('click', () => endRound(boardData, UIBoard));
+function setupResetBtn(player, UIBoard) {
+  const resetBtn = UIBoard.querySelector('.reset-button');
+  resetBtn.addEventListener('click', () => {
+    resetShipHandler(player);
+  });
 }
 
 function setupRandomBtn(player, UIBoard) {
+  const randomBtn = UIBoard.querySelector('.randomize-button');
   randomBtn.addEventListener('click', () => {
     const boardData = randomPlacement(player);
     resetBoards(UIBoard);
@@ -97,14 +170,75 @@ function setupRandomBtn(player, UIBoard) {
   });
 }
 
-function setupFinishBtn() {
+function setupFinishBtn(UIBoard, cb) {
+  const finishBtn = UIBoard.querySelector('.finish-button');
   finishBtn.addEventListener('click', () => {
     if (allShipsPlaced(ships)) return alert('Must place all ships');
-    battlePhaseOn();
+    cb();
   });
 }
 
+const rotateShipHandler = () => {
+  ships.forEach((ship) => {
+    const isHorizontal = ship.dataset.position === 'horizontal';
+    blockPositions = isHorizontal ? 'vertical' : 'horizontal';
+    ship.dataset.position = isHorizontal ? 'vertical' : 'horizontal';
+    ship.style.flexDirection = isHorizontal ? 'column' : 'row';
+    ship.querySelectorAll('.block').forEach((block) => {
+      [block.dataset.offsetX, block.dataset.offsetY] = [
+        block.dataset.offsetY,
+        block.dataset.offsetX,
+      ];
+    });
+  });
+};
+
+const resetShipHandler = (player) => {
+  if (!cells) return;
+  cells.forEach((cell) => {
+    cell.classList.remove('filled');
+  });
+  ships.forEach((ship) => ship.classList.remove('hidden'));
+  shipDetails = [];
+  resetBoardData(player);
+};
+
+rotateBtn.addEventListener('click', rotateShipHandler);
+closeScoreboardBtn.addEventListener('click', () => scoreboard.close());
+playAgainBtn.addEventListener('click', () => endRound());
+
+// BOARD COVERS FUNCTIONALITY
+
+function addBoardCover(targetBoard, text) {
+  const board = targetBoard.querySelector('.board');
+  const coverBoard = document.createElement('div');
+  coverBoard.innerText = text;
+  coverBoard.classList.add('board-cover');
+  coverBoard.classList.add('hidden');
+  board.appendChild(coverBoard);
+}
+addBoardCover(player1UIBoard, `Player 1's Turn`);
+addBoardCover(player2UIBoard, `Player 2's Turn`);
+addBoardCover(compUIBoard, `Computer's Turn`);
+
+function toggleBoardCovers(...targetBoards) {
+  targetBoards.forEach((board) => {
+    const coverBoard = board.querySelector('.board-cover');
+    coverBoard.classList.toggle('hidden');
+    coverBoard.parentElement.classList.remove('not-selectable');
+  });
+}
+
+function hideAllBoardCovers() {
+  const boardCovers = document.querySelectorAll('.board-cover');
+  boardCovers.forEach((cover) => cover.classList.add('hidden'));
+}
+
 // BOARD FUNCTIONS
+
+document.querySelectorAll('.board').forEach((board) => {
+  board.targetCells = [];
+});
 
 // Render UI board cells
 function renderBoardCells(boardData, UIBoard) {
@@ -132,7 +266,14 @@ function addFilled(boardData, UIBoard) {
   });
 }
 
-// Add drag events to cells where ships are to be placed
+function hideFilled(UIBoard) {
+  const board = UIBoard.querySelector('.board');
+  const cells = board.querySelectorAll('.cell');
+  cells.forEach((cell) => {
+    cell.classList.remove('filled');
+  });
+}
+
 function addDragEvents(UIBoard) {
   cells = UIBoard.querySelectorAll(`.cell`);
   cells.forEach((cell) => {
@@ -143,16 +284,15 @@ function addDragEvents(UIBoard) {
   });
 }
 
-// Check if all UI ships are placed
 function allShipsPlaced(ships) {
   return Array.from(ships).some((ship) => {
     if (!ship.classList.contains('hidden')) return true;
   });
 }
 
-// Remove all cells in boards
 function resetBoards(...UIBoards) {
   UIBoards.forEach((board) => {
+    board.querySelector('.board').classList.remove('not-selectable');
     const cells = board.querySelectorAll('.cell');
     cells.forEach((cell) => {
       cell.remove();
@@ -160,11 +300,19 @@ function resetBoards(...UIBoards) {
   });
 }
 
-function updateUIBoard(opponent, x, y, impact) {
-  const toggleCovers = () => toggleBoardCovers(player1UIBoard, compUIBoard);
-  if (impact === 'game over') return;
+function updateUIBoard(mode, opponent, x, y, impact) {
+  const toggleCovers = () => {
+    if (mode === 'vsAI') {
+      toggleBoardCovers(player1UIBoard, compUIBoard);
+    } else if (mode === 'P2P') {
+      toggleBoardCovers(player1UIBoard, player2UIBoard);
+    }
+  };
+  if (impact === 'game over') impact = 'hit';
   validateClickedCell(x, y, impact);
+  if (impact === 'game over') return;
   if (impact === 'hit') return;
+
   if (opponent !== computer) {
     setTimeout(toggleCovers, 1000);
   } else {
@@ -172,10 +320,15 @@ function updateUIBoard(opponent, x, y, impact) {
   }
 }
 
-// For single player function
 function renderComputerBoard() {
+  resetBoards(compUIBoard);
   renderBoardCells(computer.gameboard.board, compUIBoard);
   addCellEvents(compUIBoard, computer);
+}
+
+function renderPlayerBoards() {
+  addCellEvents(player1UIBoard, player1);
+  addCellEvents(player2UIBoard, player2);
 }
 
 // CELL FUNCTIONS
@@ -201,7 +354,9 @@ function clickCell(opponent, e) {
     !cell.classList.contains('miss')
   ) {
     cell.classList.remove('on-select');
-    updateUIBoard(opponent, x, y, attackBoard(opponent, x, y));
+    const impact = attackBoard(opponent, x, y, mode);
+    if (impact === 'miss') cell.parentElement.classList.add('not-selectable');
+    updateUIBoard(mode, opponent, x, y, impact);
     play();
   }
 }
@@ -216,7 +371,10 @@ function validateClickedCell(x, y, impact) {
 function addCellEvents(UIBoard, opponent) {
   const board = UIBoard.querySelector('.board');
   board.addEventListener('mouseover', hoverCell);
-  board.addEventListener('click', (e) => clickCell(opponent, e));
+  // board.addEventListener('click', (e) => clickCell(opponent, e));
+  board.onclick = function (e) {
+    clickCell(opponent, e);
+  };
 }
 
 function updateCell(UIBoard, x, y, impact) {
@@ -224,37 +382,6 @@ function updateCell(UIBoard, x, y, impact) {
     `.cell[data-x="${x}"][data-y="${y}"]`,
   );
   targetCell.classList.add(impact);
-}
-
-// GAMEPLAY FUNCTIONS
-
-function preparationPhase(boardData, UIBoard) {
-  resetShipHandler();
-  resetBoards(player1UIBoard, compUIBoard);
-  renderBoardCells(boardData, UIBoard);
-  addDragEvents(UIBoard);
-}
-
-function battlePhaseOn() {
-  shipContainer.classList.add('hidden');
-  buttonContainers.classList.add('hidden');
-  compUIBoard.classList.remove('hidden');
-  toggleLoader();
-  startRound();
-  renderComputerBoard();
-  toggleBoardCovers(player1UIBoard);
-  setTimeout(() => toggleLoader(), 3000);
-  console.log(player1, computer);
-}
-
-function battlePhaseOff() {
-  shipContainer.classList.remove('hidden');
-  buttonContainers.classList.remove('hidden');
-  compUIBoard.classList.add('hidden');
-}
-
-function toggleLoader() {
-  loader.classList.toggle('hidden');
 }
 
 // DRAG N DROP FEATURE
@@ -276,18 +403,19 @@ function hideAllShips() {
 // HELPER FUNCTIONS
 
 // Remove highlights for every target cells highlighted
-function removeHighlights() {
-  targetCells.forEach((cell) => {
+function removeHighlights(board) {
+  if (!board || !board.targetCells) return;
+  board.targetCells.forEach((cell) => {
     cell.classList.remove('highlight');
   });
-  targetCells = [];
+  board.targetCells = [];
 }
 
 // Get target cell
-function getTargetCell(block, blockX, blockY, cellX, cellY) {
+function getTargetCell(block, blockX, blockY, cellX, cellY, board) {
   const offsetX = parseInt(block.dataset.offsetX) - blockX;
   const offsetY = parseInt(block.dataset.offsetY) - blockY;
-  const targetCell = document.querySelector(
+  const targetCell = board.querySelector(
     `.cell[data-x="${cellX + offsetX}"][data-y="${cellY + offsetY}"]`,
   );
   return targetCell;
@@ -304,11 +432,11 @@ function addTargetCell(targetCells, targetCell, block) {
 }
 
 // Validate target cells
-function validateCells(blocks, blockX, blockY, cellX, cellY, cb) {
+function validateCells(blocks, blockX, blockY, cellX, cellY, cb, board) {
   const targetCells = [];
 
   blocks.forEach((block) => {
-    let targetCell = getTargetCell(block, blockX, blockY, cellX, cellY);
+    let targetCell = getTargetCell(block, blockX, blockY, cellX, cellY, board);
 
     if (targetCell) {
       addTargetCell(targetCells, targetCell, block);
@@ -357,13 +485,18 @@ function dragStart(e) {
 }
 
 function dragEnd() {
-  // If ship was dragged but not placed, restore the ships visibility
+  // If ship was dragged but not placed, restore the ship's visibility
   if (!successDrop) draggedShip.classList.remove('hidden');
   // If ship was placed successfully, reset drag details and remove highlighted
   // styles in board
   draggedShip = null;
   successDrop = false;
-  removeHighlights();
+
+  // Remove highlights from the current board
+  if (currentBoard) {
+    removeHighlights(currentBoard);
+    currentBoard = null;
+  }
 }
 
 function dragOver(e) {
@@ -373,11 +506,19 @@ function dragOver(e) {
 function dragEnter(e) {
   e.preventDefault();
 
+  const board = this.closest('.board');
+  if (!board) return;
+
+  currentBoard = board; // Track the current board
+
   const startX = parseInt(this.dataset.x);
   const startY = parseInt(this.dataset.y);
   const blocks = draggedShip.querySelectorAll('.block');
   const currentBlockX = parseInt(currentBlock.dataset.offsetX);
   const currentBlockY = parseInt(currentBlock.dataset.offsetY);
+
+  // Clear previous highlights
+  removeHighlights(board);
 
   // Highlight cells that are available for placement based on
   // dragged ship's position and length
@@ -388,19 +529,25 @@ function dragEnter(e) {
     startX,
     startY,
     (cell) => {
-      targetCells.push(cell);
+      board.targetCells.push(cell);
       if (!cell.classList.contains('filled')) cell.classList.add('highlight');
     },
+    board,
   );
 }
 
 function dragLeave(e) {
   e.preventDefault();
-  removeHighlights();
+  const board = this.closest('.board');
+  if (!board) return;
+  removeHighlights(board);
 }
 
 function dropShip(e) {
   e.preventDefault();
+
+  const board = this.closest('.board');
+  if (!board) return;
 
   const startX = parseInt(this.dataset.x);
   const startY = parseInt(this.dataset.y);
@@ -432,11 +579,13 @@ function dropShip(e) {
       currentBlockY,
       startX,
       startY,
+      board,
     );
 
     if (targetCell === null) return true;
     return targetCell.classList.contains('filled');
   });
+
   if (isFilled) return;
 
   // Place ship if it passes all conditions(out of bounds, filled placement)
@@ -450,79 +599,22 @@ function dropShip(e) {
       cell.classList.remove('highlight');
       cell.classList.add('filled');
     },
+    board,
   );
 
-  // Store ship details by getting the ships x, y, position, and length to
-  // be stored in the database
   shipDetails.push(firstTargetCell);
-
-  // If ship has been placed successfully change status to true
   successDrop = true;
+  removeHighlights(board);
 }
 
-// EVENT HANDLERS FOR BUTTONS
-
-const rotateShipHandler = () => {
-  ships.forEach((ship) => {
-    const isHorizontal = ship.dataset.position === 'horizontal';
-    blockPositions = isHorizontal ? 'vertical' : 'horizontal';
-    ship.dataset.position = isHorizontal ? 'vertical' : 'horizontal';
-    ship.style.flexDirection = isHorizontal ? 'column' : 'row';
-    ship.querySelectorAll('.block').forEach((block) => {
-      [block.dataset.offsetX, block.dataset.offsetY] = [
-        block.dataset.offsetY,
-        block.dataset.offsetX,
-      ];
-    });
-  });
+window.onload = () => {
+  gameMode.showModal();
 };
-
-const resetShipHandler = () => {
-  if (!cells) return;
-  cells.forEach((cell) => {
-    cell.classList.remove('filled');
-  });
-  ships.forEach((ship) => ship.classList.remove('hidden'));
-  shipDetails = [];
-  resetBoardData(player1);
-};
-
-// ADD BUTTON EVENTS
-
-rotateBtn.addEventListener('click', rotateShipHandler);
-resetBtn.addEventListener('click', resetShipHandler);
-closeScoreboardBtn.addEventListener('click', () => scoreboard.close());
-
-// BOARD COVERS FUNCTIONALITY
-
-function addBoardCover(targetBoard, text) {
-  const board = targetBoard.querySelector('.board');
-  const coverBoard = document.createElement('div');
-  coverBoard.innerText = text;
-  coverBoard.classList.add('board-cover');
-  coverBoard.classList.add('hidden');
-  board.appendChild(coverBoard);
-}
-addBoardCover(player1UIBoard, `Player 1's Turn`);
-addBoardCover(player2UIBoard, `Player 2's Turn`);
-addBoardCover(compUIBoard, `Computer's Turn`);
-
-function toggleBoardCovers(...targetBoards) {
-  targetBoards.forEach((board) => {
-    const coverBoard = board.querySelector('.board-cover');
-    coverBoard.classList.toggle('hidden');
-  });
-}
-
-function hideAllBoardCovers() {
-  const boardCovers = document.querySelectorAll('.board-cover');
-  boardCovers.forEach((cover) => cover.classList.add('hidden'));
-}
 
 export {
-  showGameModes,
   getShipDetails,
   showScoreboard,
   showPlayAgainBtn,
   updateUIBoard,
+  getMode,
 };

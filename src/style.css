@@ -309,6 +309,7 @@ dialog.scoreboard .close:hover {
 
 .not-selectable {
   cursor: initial;
+  pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
 }

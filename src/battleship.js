@@ -1,4 +1,3 @@
-// import './style.css';
 import Gameboard from './gameboard.js';
 import Ship from './ship.js';
 import Player from './player.js';
@@ -10,15 +9,10 @@ const player2UIBoard = document.querySelector('.board-2');
 const compUIBoard = document.querySelector('.board-3');
 
 const player1 = new Player('Player 1', new Gameboard());
+const player2 = new Player('Player 2', new Gameboard());
 const computer = new Computer(new Gameboard());
 const shipsLengths = [2, 3, 3, 4, 5];
 
-// First User Interaction
-window.onload = () => {
-  DOM.showGameModes();
-};
-
-// Create ship objects
 function createShips(shipsLengths, ships = []) {
   shipsLengths.forEach((length) => {
     ships.push(new Ship(length));
@@ -26,23 +20,21 @@ function createShips(shipsLengths, ships = []) {
   return ships;
 }
 
-// Player place ship randomly
 function randomPlacement(player) {
   const playerShips = createShips(shipsLengths);
-  resetBoardData(player1, computer);
+  resetBoardData(player);
   playerShips.forEach((ship) => {
     player.placeShipRandomly(ship);
   });
   return player.gameboard.board;
 }
 
-// Get ship details from the UI board and update gameboard data
-function placePlayerShips() {
+function placePlayerShips(player) {
   const playerShips = createShips(shipsLengths);
   const shipDetails = DOM.getShipDetails();
-  if (shipDetails.length === 0) return;
+  if (shipDetails.length < 5) return;
   for (let i = 0; i < shipsLengths.length; i++) {
-    player1.gameboard.placeShip(
+    player.gameboard.placeShip(
       shipDetails[i].x,
       shipDetails[i].y,
       playerShips[i],
@@ -51,7 +43,6 @@ function placePlayerShips() {
   }
 }
 
-// Place computer ships randomly
 function placeComputerShips() {
   const computerShips = createShips(shipsLengths);
   computerShips.forEach((ship) => {
@@ -70,53 +61,67 @@ function resetTurns(entity1, entity2) {
   entity2.turn = false;
 }
 
-function startRound() {
-  placePlayerShips();
-  placeComputerShips();
+function startRound(mode) {
+  if (mode === 'vsAI') {
+    placePlayerShips(player1);
+    placeComputerShips();
+    resetTurns(player1, computer);
+  } else if (mode === 'P2P') {
+    placePlayerShips(player2);
+    resetTurns(player1, player2);
+  }
 
-  resetTurns(player1, computer);
   player1.switchTurn();
 }
 
-function switchTurn(entity1, entity2) {
-  entity1.switchTurn();
+function switchTurn(mode) {
+  let entity2 = computer;
+  if (mode === 'P2P') entity2 = player2;
+  player1.switchTurn();
   entity2.switchTurn();
-  return entity1.turn ? entity1 : entity2;
+  return player1.turn ? player1 : entity2;
 }
 
-function getCurrentTurn(entity1, entity2) {
-  return entity1.turn === true ? entity1 : entity2;
+function getCurrentTurn(mode) {
+  let entity2 = computer;
+  if (mode === 'P2P') entity2 = player2;
+  return player1.turn === true ? player1 : entity2;
 }
 
-function checkWinner(entity1, entity2) {
-  if (entity1.gameboard.allShipsSunk()) {
+function checkWinner(mode) {
+  let entity2 = computer;
+  if (mode === 'P2P') entity2 = player2;
+  if (player1.gameboard.allShipsSunk()) {
     return `${entity2.name} Wins`;
   } else if (entity2.gameboard.allShipsSunk()) {
-    return `${entity1.name} Wins`;
+    return `${player1.name} Wins`;
   }
 }
 
-function attackBoard(opponent, x, y) {
+function attackBoard(opponent, x, y, mode) {
   const impact = opponent.gameboard.receiveAttack(x, y);
 
-  if (checkWinner(player1, computer)) {
+  if (checkWinner(mode)) {
     endGame();
     return 'game over';
   }
+
   if (impact === 'hit') return 'hit';
 
-  switchTurn(player1, computer);
+  switchTurn(mode);
 
   return 'miss';
 }
 
 function play() {
-  const currentTurn = getCurrentTurn(player1, computer);
+  const mode = DOM.getMode();
+  const currentTurn = getCurrentTurn(mode);
+
   if (currentTurn === computer) {
     const computerTurn = () => {
       const [x, y] = computer.attackBoardRandomly(player1.gameboard);
-      const result = attackBoard(player1, x, y);
-      DOM.updateUIBoard(player1, x, y, result);
+      const result = attackBoard(player1, x, y, mode);
+      DOM.updateUIBoard(mode, player1, x, y, result);
 
       if (result === 'game-over') {
         return;
@@ -133,12 +138,13 @@ function play() {
 }
 
 function attackAdjacent(opponent, lastHit) {
+  const mode = DOM.getMode();
   const nextAttack = computer.enhancedAttackMode(opponent.gameboard, lastHit);
 
   if (nextAttack) {
     const [newX, newY] = nextAttack;
-    const newResult = attackBoard(opponent, newX, newY);
-    DOM.updateUIBoard(opponent, newX, newY, newResult);
+    const newResult = attackBoard(opponent, newX, newY, mode);
+    DOM.updateUIBoard(mode, opponent, newX, newY, newResult);
 
     if (newResult === 'game-over') {
       return;
@@ -151,26 +157,39 @@ function attackAdjacent(opponent, lastHit) {
 }
 
 function endGame() {
-  const winner = checkWinner(player1, computer);
-  const winnerBoard = winner === 'Player 1 Wins' ? player1UIBoard : compUIBoard;
+  const mode = DOM.getMode();
+  let entity2 = computer;
+  let entity2Board = compUIBoard;
+  if (mode === 'P2P') {
+    entity2 = player2;
+    entity2Board = player2UIBoard;
+  }
+  const winner = checkWinner(mode);
+  const winnerBoard =
+    winner === 'Player 1 Wins' ? player1UIBoard : entity2Board;
   const coverBoard = winnerBoard.querySelector('.board-cover');
-  const hiddenBoard = document.querySelector('.board-cover.hidden');
+  const hiddenBoard = document.querySelector(
+    '.active:has(.board-cover.hidden)',
+  );
   if (winner) {
     coverBoard.innerText = winner;
-    hiddenBoard.parentElement.classList.add('not-selectable');
-    getCurrentTurn(player1, computer).incrementScore();
-    DOM.showScoreboard(player1.score, computer.score);
+    hiddenBoard.querySelector('.board').classList.add('not-selectable');
+    getCurrentTurn(mode).incrementScore();
+    DOM.showScoreboard(player1.score, entity2.score);
     DOM.showPlayAgainBtn();
-    resetBoardData(player1, computer);
+    resetBoardData(player1, entity2);
   }
 }
 
 export {
   player1,
+  player2,
   computer,
   randomPlacement,
+  placePlayerShips,
   startRound,
   play,
   attackBoard,
   resetBoardData,
+  endGame,
 };
